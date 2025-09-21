@@ -1,4 +1,7 @@
+import { AppSidebar } from "@/components/custom/app-sidebar";
 import Header from "@/components/custom/header";
+import { ThemeProvider } from "@/components/theme-provider";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { ProviderProvider } from "@/contexts/provider-context";
 import "@/styles/globals.css";
 
@@ -20,12 +23,28 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable} pt-14`}>
+    <html lang="en" className={`${geist.variable} pt-14`} suppressHydrationWarning>
       <body>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+
         <ProviderProvider>
-          <Header />
-          {children}
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full">
+              <AppSidebar />
+
+              <div className="flex flex-1 flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+              </div>
+            </div>
+          </SidebarProvider>
         </ProviderProvider>
+          </ThemeProvider>
       </body>
     </html>
   );

@@ -133,7 +133,7 @@ const AiInput = () => {
 
   return (
     <div 
-      className="w-full min-h-[80vh] p-8 bg-white relative"
+      className="w-full min-h-[80vh] p-8 bg-background relative"
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
