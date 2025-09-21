@@ -16,7 +16,7 @@ export default function Header() {
       <header className="fixed top-0 z-40 h-14 w-full bg-background/50 backdrop-blur-md border-b-2 border-secondary">
         <div className="flex h-full items-center justify-between px-4 w-full">
           <div className="flex items-center gap-4">
-            <span className="font-semibold">AI Chat</span>
+            <span className="font-semibold">z1</span>
             <ProviderSelector
               onAddProvider={() => setIsAddProviderDialogOpen(true)}
             />

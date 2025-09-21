@@ -26,7 +26,8 @@ export default function HomePage() {
       ) : (
         <>
           {/* When no conversations - center the input */}
-          <div className="flex h-full items-center justify-center">
+          <div className="flex flex-col gap-4 h-full items-center justify-center">
+            <div className="text-2xl font-medium pb-6 text-foreground/80">What's on your mind today?</div>
             <div className="w-full max-w-3xl">
               <AiInput />
             </div>

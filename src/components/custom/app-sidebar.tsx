@@ -12,7 +12,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Plus } from "lucide-react";
-import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export function AppSidebar() {
   return (
@@ -21,7 +21,8 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between px-2 py-1 group-data-[collapsible=icon]:hidden">
             <Avatar>
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src={"https://avatars.githubusercontent.com/u/118415844?v=4"}/>
+              <AvatarFallback>z1</AvatarFallback>
             </Avatar>
             <SidebarTrigger className="p-5"/>
           </SidebarMenuItem>
