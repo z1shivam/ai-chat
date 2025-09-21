@@ -12,7 +12,7 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ui/shadcn-io/ai/prompt-input";
-import { ImageIcon, XIcon } from 'lucide-react';
+import { ImageIcon, XIcon } from "lucide-react";
 import { type FormEventHandler, useState, useRef } from "react";
 import React from "react";
 import { useProvider } from "@/contexts/provider-context";
@@ -39,26 +39,26 @@ const AiInput = () => {
   // Set default model when available models change
   React.useEffect(() => {
     if (availableModels.length > 0 && !selectedModel) {
-      setSelectedModel(availableModels[0]?.id || '');
+      setSelectedModel(availableModels[0]?.id || "");
     }
   }, [availableModels, selectedModel]);
 
   const handleImageFiles = (files: File[]) => {
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
+
     imageFiles.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        const base64 = result.split(',')[1] || '';
-        
+        const base64 = result.split(",")[1] || "";
+
         const attachedImage: AttachedImage = {
           file,
           preview: result,
-          base64
+          base64,
         };
-        
-        setAttachedImages(prev => [...prev, attachedImage]);
+
+        setAttachedImages((prev) => [...prev, attachedImage]);
       };
       reader.readAsDataURL(file);
     });
@@ -67,10 +67,10 @@ const AiInput = () => {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     handleImageFiles(files);
-    
+
     // Reset input value
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -99,13 +99,13 @@ const AiInput = () => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     handleImageFiles(files);
   };
 
   const removeImage = (index: number) => {
-    setAttachedImages(prev => prev.filter((_, i) => i !== index));
+    setAttachedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
@@ -113,12 +113,12 @@ const AiInput = () => {
     if (!text && attachedImages.length === 0) {
       return;
     }
-    
+
     if (!selectedProvider) {
-      alert('Please select a provider first');
+      alert("Please select a provider first");
       return;
     }
-    
+
     setStatus("submitted");
     setTimeout(() => {
       setStatus("streaming");
@@ -130,10 +130,9 @@ const AiInput = () => {
     }, 2000);
   };
 
-
   return (
-    <div 
-      className="w-full min-h-[80vh] p-8 bg-background relative"
+    <div
+      className="bg-transparent relative w-full pb-3"
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -141,26 +140,26 @@ const AiInput = () => {
     >
       {/* Image Previews */}
       {attachedImages.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-3 relative z-10">
+        <div className="relative z-10 mb-4 flex flex-wrap gap-3">
           {attachedImages.map((image, index) => (
-            <div key={index} className="relative group">
-              <div className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+            <div key={index} className="group relative">
+              <div className="h-20 w-20 overflow-hidden rounded-lg border border-gray-200">
                 <Image
                   base64={image.base64}
                   uint8Array={new Uint8Array()}
                   mediaType={image.file.type}
                   alt={image.file.name}
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
-              <div className="mt-1 text-xs text-gray-600 max-w-20 truncate">
+              <div className="mt-1 max-w-20 truncate text-xs text-gray-600">
                 {image.file.name}
               </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-red-500 p-0 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600"
                 onClick={() => removeImage(index)}
               >
                 <XIcon className="h-3 w-3" />
@@ -169,10 +168,10 @@ const AiInput = () => {
           ))}
         </div>
       )}
-      
+
       {/* Dropzone Overlay */}
       {isDragOver && (
-        <div className="absolute inset-4 bg-white/90 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+        <div className="absolute inset-4 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-lg">
           <div className="border-2 border-dashed border-blue-400 rounded-lg p-16 bg-blue-50/50 text-center max-w-md">
             <ImageIcon className="h-16 w-16 text-blue-500 mx-auto mb-6" />
             <p className="text-xl font-medium text-gray-900 mb-2">Drop images here</p>
@@ -180,13 +179,17 @@ const AiInput = () => {
           </div>
         </div>
       )}
-      
+
       <div className="relative z-10">
         <PromptInput onSubmit={handleSubmit}>
           <PromptInputTextarea
             onChange={(e) => setText(e.target.value)}
             value={text}
-            placeholder={selectedProvider ? "Type your message..." : "Please select a provider first..."}
+            placeholder={
+              selectedProvider
+                ? "Type your message..."
+                : "Please select a provider first..."
+            }
             disabled={!selectedProvider}
           />
           <PromptInputToolbar>
@@ -207,31 +210,39 @@ const AiInput = () => {
               >
                 <ImageIcon size={16} />
               </PromptInputButton>
-              
+
               {selectedProvider && (
-                <PromptInputModelSelect onValueChange={setSelectedModel} value={selectedModel}>
+                <PromptInputModelSelect
+                  onValueChange={setSelectedModel}
+                  value={selectedModel}
+                >
                   <PromptInputModelSelectTrigger>
                     <PromptInputModelSelectValue placeholder="Select model" />
                   </PromptInputModelSelectTrigger>
                   <PromptInputModelSelectContent>
                     {availableModels.map((model) => (
-                      <PromptInputModelSelectItem key={model.id} value={model.id}>
+                      <PromptInputModelSelectItem
+                        key={model.id}
+                        value={model.id}
+                      >
                         {model.displayName}
                       </PromptInputModelSelectItem>
                     ))}
                   </PromptInputModelSelectContent>
                 </PromptInputModelSelect>
               )}
-              
+
               {!selectedProvider && (
-                <div className="text-sm text-gray-500 px-2">
+                <div className="px-2 text-sm text-gray-500">
                   No provider selected
                 </div>
               )}
             </PromptInputTools>
-            <PromptInputSubmit 
-              disabled={(!text && attachedImages.length === 0) || !selectedProvider} 
-              status={status} 
+            <PromptInputSubmit
+              disabled={
+                (!text && attachedImages.length === 0) || !selectedProvider
+              }
+              status={status}
             />
           </PromptInputToolbar>
         </PromptInput>

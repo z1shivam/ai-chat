@@ -83,31 +83,29 @@ export default function AiConversation({
   };
 
   return (
-    <div className="flex h-full w-full flex-col">
-      <Conversation>
-        <ConversationContent>
-          {messages.map((message) => (
-            <>
-              <Message from={message.role} key={message.id}>
-                <MessageContent>
-                  <Response>{message.content}</Response>
-                </MessageContent>
-          
-              </Message>
-              {message.from === "assistant" && (
-                <Actions className="">
-                  {actions.map((action) => (
-                    <Action key={action.label} label={action.label} tooltip={action.label}>
-                      <action.icon className="size-4" />
-                    </Action>
-                  ))}
-                </Actions>
-              )}
-            </>
-          ))}
-        </ConversationContent>
-        <ConversationScrollButton />
-      </Conversation>
-    </div>
+    <Conversation className="h-full">
+      <ConversationContent className="h-full">
+        {messages.map((message) => (
+          <>
+            <Message from={message.role} key={message.id}>
+              <MessageContent>
+                <Response>{message.content}</Response>
+              </MessageContent>
+        
+            </Message>
+            {message.from === "assistant" && (
+              <Actions className="">
+                {actions.map((action) => (
+                  <Action key={action.label} label={action.label} tooltip={action.label}>
+                    <action.icon className="size-4" />
+                  </Action>
+                ))}
+              </Actions>
+            )}
+          </>
+        ))}
+      </ConversationContent>
+      <ConversationScrollButton />
+    </Conversation>
   );
 }

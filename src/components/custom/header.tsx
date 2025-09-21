@@ -13,16 +13,17 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 z-40 h-14 w-full border-b-2 border-secondary bg-background">
-        <div className="flex h-full items-center justify-between px-4">
+      <header className="fixed top-0 z-40 h-14 w-full bg-background/50 backdrop-blur-md border-b-2 border-secondary">
+        <div className="flex h-full items-center justify-between px-4 w-full">
           <div className="flex items-center gap-4">
-            <SidebarTrigger />
             <span className="font-semibold">AI Chat</span>
             <ProviderSelector
               onAddProvider={() => setIsAddProviderDialogOpen(true)}
             />
             <ModeToggle />
           </div>
+
+
         </div>
       </header>
 
