@@ -43,6 +43,21 @@ const AiInput = () => {
     }
   }, [availableModels, selectedModel]);
 
+  // Handle drag end globally to ensure overlay is hidden when drag operation ends
+  React.useEffect(() => {
+    const handleDragEnd = () => {
+      setIsDragOver(false);
+    };
+
+    window.addEventListener('dragend', handleDragEnd);
+    window.addEventListener('dragleave', handleDragEnd);
+    
+    return () => {
+      window.removeEventListener('dragend', handleDragEnd);
+      window.removeEventListener('dragleave', handleDragEnd);
+    };
+  }, []);
+
   const handleImageFiles = (files: File[]) => {
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
 
@@ -89,8 +104,13 @@ const AiInput = () => {
   const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only hide overlay if leaving the main container
-    if (e.currentTarget === e.target) {
+    // Use relatedTarget to check if we're truly leaving the component
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX;
+    const y = e.clientY;
+    
+    // Check if the mouse is outside the component bounds
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       setIsDragOver(false);
     }
   };
@@ -132,7 +152,7 @@ const AiInput = () => {
 
   return (
     <div
-      className="bg-transparent relative w-full pb-3"
+      className="bg-transparent relative w-full pb-3 backdrop-blur-lg"
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -171,11 +191,11 @@ const AiInput = () => {
 
       {/* Dropzone Overlay */}
       {isDragOver && (
-        <div className="absolute inset-4 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm rounded-lg">
-          <div className="border-2 border-dashed border-blue-400 rounded-lg p-16 bg-blue-50/50 text-center max-w-md">
-            <ImageIcon className="h-16 w-16 text-blue-500 mx-auto mb-6" />
-            <p className="text-xl font-medium text-gray-900 mb-2">Drop images here</p>
-            <p className="text-sm text-gray-600">Support for PNG, JPG, GIF, WebP</p>
+        <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-background/80">
+          <div className="border-2 border-dashed border-foreground/30 rounded-2xl p-20 bg-background/50 text-center w-full max-w-2xl mx-8 min-h-[300px] flex flex-col items-center justify-center transition-all duration-200">
+            <ImageIcon className="h-24 w-24 text-foreground/60 mx-auto mb-8" />
+            <p className="text-3xl font-medium text-foreground mb-4">Drop images here</p>
+            <p className="text-lg text-foreground/60">Support for PNG, JPG, GIF, WebP</p>
           </div>
         </div>
       )}

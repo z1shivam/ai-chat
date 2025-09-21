@@ -4,7 +4,7 @@ import AiInput from "@/components/custom/ai_input";
 export default function HomePage() {
   // This would ideally come from a state management solution
   // For now, we'll assume there are conversations (you can modify this logic)
-  const hasConversations = true; // This should be dynamic based on actual conversation state
+  const hasConversations = false; // This should be dynamic based on actual conversation state
 
   return (
     <main className="h-screen relative overflow-hidden">
