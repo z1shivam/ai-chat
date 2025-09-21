@@ -3,13 +3,11 @@
 import React, { useState } from "react";
 import { ProviderSelector } from "./provider-selector";
 import { AddProviderDialog } from "./add-provider-dialog";
-import { SidebarTrigger } from "../ui/sidebar";
 import { useTheme } from "next-themes";
 import { ModeToggle } from "../theme-toggle";
 
 export default function Header() {
   const [isAddProviderDialogOpen, setIsAddProviderDialogOpen] = useState(false);
-  const { setTheme } = useTheme();
 
   return (
     <>

@@ -8,7 +8,6 @@ import {
 } from "../ui/shadcn-io/ai/conversation";
 import {
   Message,
-  MessageAvatar,
   MessageContent,
 } from "../ui/shadcn-io/ai/message";
 import { Response } from "../ui/shadcn-io/ai/response";
@@ -74,13 +73,6 @@ export default function AiConversation({
       label: "Share",
     },
   ];
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (input.trim()) {
-      // TODO: update messages state here if needed
-      setInput("");
-    }
-  };
 
   return (
     <Conversation className="h-full">

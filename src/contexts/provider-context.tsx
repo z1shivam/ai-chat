@@ -27,7 +27,7 @@ export function ProviderProvider({ children }: ProviderProviderProps) {
       const savedSelectedProviderId = localStorage.getItem(STORAGE_KEYS.SELECTED_PROVIDER);
       
       if (savedProviders) {
-        const parsedProviders: ProviderConfig[] = JSON.parse(savedProviders);
+        const parsedProviders = JSON.parse(savedProviders) as ProviderConfig[];
         setProviders(parsedProviders);
         
         if (savedSelectedProviderId) {

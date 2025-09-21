@@ -139,7 +139,7 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
           <DialogHeader>
             <DialogTitle>Delete Provider</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the provider "{providerToDelete?.name}"? This action cannot be undone.
+              Are you sure you want to delete the provider &quot;{providerToDelete?.name}&quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

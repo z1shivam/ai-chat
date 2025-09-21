@@ -39,7 +39,7 @@ const AiInput = () => {
   // Set default model when available models change
   React.useEffect(() => {
     if (availableModels.length > 0 && !selectedModel) {
-      setSelectedModel(availableModels[0]?.id || "");
+      setSelectedModel(availableModels[0]?.id ?? "");
     }
   }, [availableModels, selectedModel]);
 
@@ -65,7 +65,7 @@ const AiInput = () => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        const base64 = result.split(",")[1] || "";
+        const base64 = result.split(",")[1] ?? "";
 
         const attachedImage: AttachedImage = {
           file,
@@ -80,7 +80,7 @@ const AiInput = () => {
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+    const files = Array.from(event.target.files ?? []);
     handleImageFiles(files);
 
     // Reset input value

@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
 import { useProvider } from '@/contexts/provider-context';
-import type { ProviderConfig, OpenRouterProviderConfig, OpenAIProviderConfig, CustomProviderConfig, Model } from '@/types/provider';
+import type { OpenRouterProviderConfig, OpenAIProviderConfig, CustomProviderConfig, Model } from '@/types/provider';
 import { OPENROUTER_FREE_MODELS } from '@/types/provider';
 
 interface AddProviderDialogProps {
@@ -283,7 +283,7 @@ export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps
                   </div>
                   {filteredModels.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No models found matching "{modelSearchTerm}"
+                      No models found matching &quot;{modelSearchTerm}&quot;
                     </p>
                   )}
                 </div>
