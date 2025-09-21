@@ -12,23 +12,24 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ui/shadcn-io/ai/prompt-input";
-import { MicIcon, SendIcon, PaperclipIcon, XIcon, FileTextIcon, FileImageIcon } from 'lucide-react';
+import { ImageIcon, XIcon } from 'lucide-react';
 import { type FormEventHandler, useState, useRef } from "react";
 import React from "react";
 import { useProvider } from "@/contexts/provider-context";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { Image } from "@/components/ui/shadcn-io/ai/image";
 
-interface AttachedFile {
+interface AttachedImage {
   file: File;
-  preview?: string;
-  type: 'image' | 'pdf' | 'docx' | 'other';
+  preview: string;
+  base64: string;
 }
 
 const AiInput = () => {
   const [text, setText] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
-  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [status, setStatus] = useState<
     "submitted" | "streaming" | "ready" | "error"
   >("ready");
@@ -42,44 +43,30 @@ const AiInput = () => {
     }
   }, [availableModels, selectedModel]);
 
-  const getFileType = (file: File): AttachedFile['type'] => {
-    const mimeType = file.type.toLowerCase();
-    const extension = file.name.split('.').pop()?.toLowerCase();
+  const handleImageFiles = (files: File[]) => {
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
     
-    if (mimeType.startsWith('image/')) return 'image';
-    if (mimeType === 'application/pdf' || extension === 'pdf') return 'pdf';
-    if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || extension === 'docx') return 'docx';
-    return 'other';
+    imageFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        const base64 = result.split(',')[1] || '';
+        
+        const attachedImage: AttachedImage = {
+          file,
+          preview: result,
+          base64
+        };
+        
+        setAttachedImages(prev => [...prev, attachedImage]);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
-    const supportedTypes = ['image/', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    
-    files.forEach((file) => {
-      const isSupported = supportedTypes.some(type => file.type.startsWith(type)) || 
-                         ['pdf', 'docx'].includes(file.name.split('.').pop()?.toLowerCase() || '');
-      
-      if (isSupported) {
-        const fileType = getFileType(file);
-        const attachedFile: AttachedFile = {
-          file,
-          type: fileType
-        };
-
-        // Create preview for images
-        if (fileType === 'image') {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            attachedFile.preview = e.target?.result as string;
-            setAttachedFiles(prev => [...prev, attachedFile]);
-          };
-          reader.readAsDataURL(file);
-        } else {
-          setAttachedFiles(prev => [...prev, attachedFile]);
-        }
-      }
-    });
+    handleImageFiles(files);
     
     // Reset input value
     if (fileInputRef.current) {
@@ -87,13 +74,43 @@ const AiInput = () => {
     }
   };
 
-  const removeFile = (index: number) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only hide overlay if leaving the main container
+    if (e.currentTarget === e.target) {
+      setIsDragOver(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    handleImageFiles(files);
+  };
+
+  const removeImage = (index: number) => {
+    setAttachedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    if (!text && attachedFiles.length === 0) {
+    if (!text && attachedImages.length === 0) {
       return;
     }
     
@@ -109,112 +126,116 @@ const AiInput = () => {
     setTimeout(() => {
       setStatus("ready");
       setText("");
-      setAttachedFiles([]);
+      setAttachedImages([]);
     }, 2000);
   };
 
-  const renderFilePreview = (attachedFile: AttachedFile, index: number) => {
-    const { file, preview, type } = attachedFile;
-    
-    return (
-      <div key={index} className="relative inline-block mr-2 mb-2">
-        <div className="flex items-center bg-gray-100 rounded-lg p-2 pr-8 max-w-xs">
-          {type === 'image' && preview ? (
-            <div className="flex items-center gap-2">
-              <Image
-                src={preview}
-                alt={file.name}
-                width={40}
-                height={40}
-                className="rounded object-cover"
-              />
-              <span className="text-sm truncate">{file.name}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              {type === 'pdf' && <FileTextIcon className="h-8 w-8 text-red-500" />}
-              {type === 'docx' && <FileTextIcon className="h-8 w-8 text-blue-500" />}
-              {type === 'other' && <FileImageIcon className="h-8 w-8 text-gray-500" />}
-              <span className="text-sm truncate">{file.name}</span>
-            </div>
-          )}
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="absolute -top-1 -right-1 h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full"
-          onClick={() => removeFile(index)}
-        >
-          <XIcon className="h-3 w-3" />
-        </Button>
-      </div>
-    );
-  };
+
   return (
-    <div className="w-full p-8">
-      {/* File Previews */}
-      {attachedFiles.length > 0 && (
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <div className="text-sm text-gray-600 mb-2">Attached files:</div>
-          <div className="flex flex-wrap">
-            {attachedFiles.map((attachedFile, index) => renderFilePreview(attachedFile, index))}
+    <div 
+      className="w-full min-h-[80vh] p-8 bg-white relative"
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Image Previews */}
+      {attachedImages.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-3 relative z-10">
+          {attachedImages.map((image, index) => (
+            <div key={index} className="relative group">
+              <div className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
+                <Image
+                  base64={image.base64}
+                  uint8Array={new Uint8Array()}
+                  mediaType={image.file.type}
+                  alt={image.file.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="mt-1 text-xs text-gray-600 max-w-20 truncate">
+                {image.file.name}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute -top-2 -right-2 h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => removeImage(index)}
+              >
+                <XIcon className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      {/* Dropzone Overlay */}
+      {isDragOver && (
+        <div className="absolute inset-4 bg-white/90 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+          <div className="border-2 border-dashed border-blue-400 rounded-lg p-16 bg-blue-50/50 text-center max-w-md">
+            <ImageIcon className="h-16 w-16 text-blue-500 mx-auto mb-6" />
+            <p className="text-xl font-medium text-gray-900 mb-2">Drop images here</p>
+            <p className="text-sm text-gray-600">Support for PNG, JPG, GIF, WebP</p>
           </div>
         </div>
       )}
       
-      <PromptInput onSubmit={handleSubmit}>
-        <PromptInputTextarea
-          onChange={(e) => setText(e.target.value)}
-          value={text}
-          placeholder={selectedProvider ? "Type your message..." : "Please select a provider first..."}
-          disabled={!selectedProvider}
-        />
-        <PromptInputToolbar>
-          <PromptInputTools>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".pdf,.docx,image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-            <PromptInputButton
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={!selectedProvider}
-            >
-              <PaperclipIcon size={16} />
-            </PromptInputButton>
-            
-            {selectedProvider && (
-              <PromptInputModelSelect onValueChange={setSelectedModel} value={selectedModel}>
-                <PromptInputModelSelectTrigger>
-                  <PromptInputModelSelectValue placeholder="Select model" />
-                </PromptInputModelSelectTrigger>
-                <PromptInputModelSelectContent>
-                  {availableModels.map((model) => (
-                    <PromptInputModelSelectItem key={model.id} value={model.id}>
-                      {model.displayName}
-                    </PromptInputModelSelectItem>
-                  ))}
-                </PromptInputModelSelectContent>
-              </PromptInputModelSelect>
-            )}
-            
-            {!selectedProvider && (
-              <div className="text-sm text-gray-500 px-2">
-                No provider selected
-              </div>
-            )}
-          </PromptInputTools>
-          <PromptInputSubmit 
-            disabled={(!text && attachedFiles.length === 0) || !selectedProvider} 
-            status={status} 
+      <div className="relative z-10">
+        <PromptInput onSubmit={handleSubmit}>
+          <PromptInputTextarea
+            onChange={(e) => setText(e.target.value)}
+            value={text}
+            placeholder={selectedProvider ? "Type your message..." : "Please select a provider first..."}
+            disabled={!selectedProvider}
           />
-        </PromptInputToolbar>
-      </PromptInput>
+          <PromptInputToolbar>
+            <PromptInputTools>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              <PromptInputButton
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!selectedProvider}
+                title="Add images"
+              >
+                <ImageIcon size={16} />
+              </PromptInputButton>
+              
+              {selectedProvider && (
+                <PromptInputModelSelect onValueChange={setSelectedModel} value={selectedModel}>
+                  <PromptInputModelSelectTrigger>
+                    <PromptInputModelSelectValue placeholder="Select model" />
+                  </PromptInputModelSelectTrigger>
+                  <PromptInputModelSelectContent>
+                    {availableModels.map((model) => (
+                      <PromptInputModelSelectItem key={model.id} value={model.id}>
+                        {model.displayName}
+                      </PromptInputModelSelectItem>
+                    ))}
+                  </PromptInputModelSelectContent>
+                </PromptInputModelSelect>
+              )}
+              
+              {!selectedProvider && (
+                <div className="text-sm text-gray-500 px-2">
+                  No provider selected
+                </div>
+              )}
+            </PromptInputTools>
+            <PromptInputSubmit 
+              disabled={(!text && attachedImages.length === 0) || !selectedProvider} 
+              status={status} 
+            />
+          </PromptInputToolbar>
+        </PromptInput>
+      </div>
     </div>
   );
 };
