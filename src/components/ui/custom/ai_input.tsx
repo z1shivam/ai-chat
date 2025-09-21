@@ -12,7 +12,8 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ui/shadcn-io/ai/prompt-input";
-import { MicIcon, PaperclipIcon } from "lucide-react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { MicIcon, SendIcon, PaperclipIcon } from 'lucide-react';
 import { type FormEventHandler, useState } from "react";
 const models = [
   { id: "gpt-4o", name: "GPT-4o" },

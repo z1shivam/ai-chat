@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/unbound-method */
+
 import { useControllableState } from '@radix-ui/react-use-controllable-state';
 import {
   Collapsible,
@@ -67,10 +69,12 @@ export const Reasoning = memo(
     useEffect(() => {
       if (isStreaming) {
         if (startTime === null) {
-          setStartTime(Date.now());
+          setStartTime(() => Date.now());
         }
       } else if (startTime !== null) {
-        setDuration(Math.round((Date.now() - startTime) / 1000));
+        const currentTime = Date.now();
+        const roundedDuration = Math.round((currentTime - startTime) / 1000);
+        setDuration(roundedDuration);
         setStartTime(null);
       }
     }, [isStreaming, startTime, setDuration]);
@@ -85,7 +89,9 @@ export const Reasoning = memo(
           setIsOpen(false);
           setHasAutoClosedRef(true);
         }, AUTO_CLOSE_DELAY);
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(timer);
+        };
       }
     }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosedRef]);
 
@@ -119,7 +125,7 @@ export type ReasoningTriggerProps = ComponentProps<
 export const ReasoningTrigger = memo(
   ({
     className,
-    title = 'Reasoning',
+    title: _title = 'Reasoning',
     children,
     ...props
   }: ReasoningTriggerProps) => {
