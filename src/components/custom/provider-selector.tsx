@@ -89,7 +89,6 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
         variant="outline"
         size="icon"
         onClick={onAddProvider}
-        className="h-10 w-10"
         title="Add Provider"
       >
         <PlusIcon className="h-4 w-4" />
