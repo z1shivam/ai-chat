@@ -1,4 +1,5 @@
 import Header from "@/components/custom/header";
+import { ProviderProvider } from "@/contexts/provider-context";
 import "@/styles/globals.css";
 
 import { type Metadata } from "next";
@@ -21,8 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable} pt-14`}>
       <body>
-        <Header />
-        {children}
+        <ProviderProvider>
+          <Header />
+          {children}
+        </ProviderProvider>
       </body>
     </html>
   );
