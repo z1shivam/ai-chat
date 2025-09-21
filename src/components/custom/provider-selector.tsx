@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { PlusIcon, ChevronDownIcon } from 'lucide-react';
+import { PlusIcon, ChevronDownIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -16,6 +16,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useProvider } from '@/contexts/provider-context';
 import type { ProviderConfig } from '@/types/provider';
 
@@ -25,11 +33,32 @@ interface ProviderSelectorProps {
 
 export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
   const [open, setOpen] = useState(false);
-  const { providers, selectedProvider, setSelectedProvider } = useProvider();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [providerToDelete, setProviderToDelete] = useState<ProviderConfig | null>(null);
+  const { providers, selectedProvider, setSelectedProvider, deleteProvider } = useProvider();
 
   const handleSelectProvider = (provider: ProviderConfig) => {
     setSelectedProvider(provider);
     setOpen(false);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, provider: ProviderConfig) => {
+    e.stopPropagation(); // Prevent the CommandItem from being selected
+    setProviderToDelete(provider);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (providerToDelete) {
+      deleteProvider(providerToDelete.id);
+      setProviderToDelete(null);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setProviderToDelete(null);
+    setDeleteDialogOpen(false);
   };
 
   const getProviderDisplayName = (provider: ProviderConfig) => {
@@ -67,15 +96,26 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
                     key={provider.id}
                     value={provider.id}
                     onSelect={() => handleSelectProvider(provider)}
-                    className="cursor-pointer"
+                    className="cursor-pointer group"
                   >
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium">{provider.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {provider.type === 'openrouter' && 'OpenRouter'}
-                        {provider.type === 'openai' && 'OpenAI'}
-                        {provider.type === 'custom' && 'Custom Provider'}
-                      </span>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium">{provider.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {provider.type === 'openrouter' && 'OpenRouter'}
+                          {provider.type === 'openai' && 'OpenAI'}
+                          {provider.type === 'custom' && 'Custom Provider'}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={(e) => handleDeleteClick(e, provider)}
+                        title="Delete provider"
+                      >
+                        <Trash2Icon className="h-4 w-4" />
+                      </Button>
                     </div>
                   </CommandItem>
                 ))}
@@ -93,6 +133,25 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
       >
         <PlusIcon className="h-4 w-4" />
       </Button>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Provider</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the provider "{providerToDelete?.name}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelDelete}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

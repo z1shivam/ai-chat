@@ -86,7 +86,7 @@ export default function AiConversation({
     <Conversation className="h-full">
       <ConversationContent className="h-full">
         {messages.map((message) => (
-          <>
+          <div key={message.id}>
             <Message from={message.role} key={message.id}>
               <MessageContent>
                 <Response>{message.content}</Response>
@@ -102,7 +102,7 @@ export default function AiConversation({
                 ))}
               </Actions>
             )}
-          </>
+          </div>
         ))}
       </ConversationContent>
       <ConversationScrollButton />

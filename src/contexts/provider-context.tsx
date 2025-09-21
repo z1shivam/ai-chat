@@ -66,6 +66,7 @@ export function ProviderProvider({ children }: ProviderProviderProps) {
 
   const addProvider = (provider: ProviderConfig) => {
     setProviders(prev => [...prev, provider]);
+    setSelectedProvider(provider); // Auto-select the newly added provider
   };
 
   const updateProvider = (id: string, updatedProvider: ProviderConfig) => {
