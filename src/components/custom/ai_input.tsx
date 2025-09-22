@@ -13,11 +13,13 @@ import {
   PromptInputTools,
 } from "@/components/ui/shadcn-io/ai/prompt-input";
 import { ImageIcon, XIcon } from "lucide-react";
-import { type FormEventHandler, useState, useRef } from "react";
+import { type FormEventHandler, useState, useRef, useMemo } from "react";
 import React from "react";
-import { useProvider } from "@/contexts/provider-context";
+import { useAppStore, useSelectedProvider, useSelectedModel } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/shadcn-io/ai/image";
+import type { Model } from "@/types/provider";
+import { OPENROUTER_FREE_MODELS } from "@/types/provider";
 
 interface AttachedImage {
   file: File;
@@ -27,21 +29,83 @@ interface AttachedImage {
 
 const AiInput = () => {
   const [text, setText] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("");
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [status, setStatus] = useState<
     "submitted" | "streaming" | "ready" | "error"
   >("ready");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { selectedProvider, availableModels } = useProvider();
+  
+  const selectedProvider = useSelectedProvider();
+  const selectedModel = useSelectedModel();
+  const { setSelectedModel } = useAppStore();
+  const previousProviderRef = useRef<string | null>(null);
 
-  // Set default model when available models change
+  // Memoize available models to prevent unnecessary recalculations
+  const availableModels = useMemo(() => {
+    if (!selectedProvider) return [];
+    
+    switch (selectedProvider.type) {
+      case 'openrouter':
+        return OPENROUTER_FREE_MODELS.filter(model => 
+          selectedProvider.selectedModels.includes(model.id)
+        );
+      case 'custom':
+        return selectedProvider.selectedModels;
+      case 'openai':
+        // For OpenAI, we could return a list of standard OpenAI models
+        // For now, returning empty array as models would be handled differently
+        return [];
+      default:
+        return [];
+    }
+  }, [selectedProvider]);
+
+  // Set default model when there's no selected model and models are available
   React.useEffect(() => {
     if (availableModels.length > 0 && !selectedModel) {
-      setSelectedModel(availableModels[0]?.id ?? "");
+      const firstModel = availableModels[0];
+      if (firstModel) {
+        setSelectedModel(firstModel);
+      }
     }
-  }, [availableModels, selectedModel]);
+  }, [availableModels, selectedModel, setSelectedModel]);
+
+  // Reset model selection only when provider actually changes
+  React.useEffect(() => {
+    const currentProviderId = selectedProvider?.id || null;
+    
+    // Check if provider actually changed
+    if (previousProviderRef.current !== currentProviderId) {
+      previousProviderRef.current = currentProviderId;
+      
+      if (selectedProvider && availableModels.length > 0) {
+        // Check if current selectedModel is still available in the new provider
+        const isCurrentModelAvailable = selectedModel && availableModels.some(
+          model => model.id === selectedModel.id
+        );
+        
+        if (!isCurrentModelAvailable) {
+          // Auto-select the first available model only when provider changes
+          const firstModel = availableModels[0];
+          if (firstModel) {
+            setSelectedModel(firstModel);
+          }
+        }
+      } else if (!selectedProvider) {
+        // Clear model selection if no provider
+        setSelectedModel(null);
+      }
+    }
+  }, [selectedProvider, availableModels, selectedModel, setSelectedModel]);
+
+  // Helper function to handle model selection from dropdown
+  const handleModelChange = (modelId: string) => {
+    const model = availableModels.find(m => m.id === modelId);
+    if (model) {
+      setSelectedModel(model);
+    }
+  };
 
   // Handle drag end globally to ensure overlay is hidden when drag operation ends
   React.useEffect(() => {
@@ -233,8 +297,8 @@ const AiInput = () => {
 
               {selectedProvider && (
                 <PromptInputModelSelect
-                  onValueChange={setSelectedModel}
-                  value={selectedModel}
+                  onValueChange={handleModelChange}
+                  value={selectedModel?.id ?? ""}
                 >
                   <PromptInputModelSelectTrigger>
                     <PromptInputModelSelectValue placeholder="Select model" />

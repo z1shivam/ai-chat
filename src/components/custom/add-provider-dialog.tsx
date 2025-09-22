@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDownIcon, ChevronRightIcon } from 'lucide-react';
-import { useProvider } from '@/contexts/provider-context';
+import { useAppStore } from '@/store/appStore';
 import type { OpenRouterProviderConfig, OpenAIProviderConfig, CustomProviderConfig, Model } from '@/types/provider';
 import { OPENROUTER_FREE_MODELS } from '@/types/provider';
 
@@ -23,7 +23,7 @@ interface AddProviderDialogProps {
 }
 
 export function AddProviderDialog({ open, onOpenChange }: AddProviderDialogProps) {
-  const { addProvider } = useProvider();
+  const { addProvider } = useAppStore();
   const [activeTab, setActiveTab] = useState('openrouter');
   const [isSubmitting, setIsSubmitting] = useState(false);
 

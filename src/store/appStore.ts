@@ -205,6 +205,7 @@ export const useAppStore = create<AppState>()(
       addProvider: (provider: ProviderConfig) => {
         set((state) => ({
           providers: [...state.providers, provider],
+          selectedProvider: provider, // Auto-select the newly added provider
         }));
       },
 

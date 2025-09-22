@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useProvider } from '@/contexts/provider-context';
+import { useAppStore } from '@/store/appStore';
 import type { ProviderConfig } from '@/types/provider';
 
 interface ProviderSelectorProps {
@@ -35,7 +35,8 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
   const [open, setOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [providerToDelete, setProviderToDelete] = useState<ProviderConfig | null>(null);
-  const { providers, selectedProvider, setSelectedProvider, deleteProvider } = useProvider();
+  
+  const { providers, selectedProvider, setSelectedProvider, deleteProvider } = useAppStore();
 
   const handleSelectProvider = (provider: ProviderConfig) => {
     setSelectedProvider(provider);
