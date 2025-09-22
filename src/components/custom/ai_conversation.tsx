@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -11,6 +12,7 @@ import {
 } from "../ui/shadcn-io/ai/message";
 import { Response } from "../ui/shadcn-io/ai/response";
 import { Action, Actions } from "../ui/shadcn-io/ai/actions";
+import { Loader } from "../ui/shadcn-io/ai/loader";
 import {
   CopyIcon,
   RefreshCcwIcon,
@@ -18,59 +20,90 @@ import {
   ThumbsDownIcon,
   ThumbsUpIcon,
 } from "lucide-react";
-
-// Define message type
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  from: "user" | "assistant";
-
-  content: string;
-};
-
-// 10 default messages
-const defaultMessages: ChatMessage[] = Array.from({ length: 10 }, (_, i) => ({
-  id: i.toString(),
-  role: i % 2 === 0 ? "user" : "assistant",
-  from: i % 2 === 0 ? "user" : "assistant",
-  content: `Here's some code:
-  lorem dfjd lsdjflksd dljfslkdjf ljdflkjsdl lsdjfflkdsjlkds ljsdffkldjslkdj ljdlkd lkjdfkdl shivam hsivam shivam hsivam shivam shivam shivam shivm shivam
-\`\`\`javascript
-const greeting = "Hello, world!";
-console.log(greeting);
-\`\`\`
-`,
-}));
+import { useAppStore } from "@/store/appStore";
+import { MessageService, type DBMessage } from "@/lib/database";
 
 type ChatProps = {
-  messages?: ChatMessage[];
+  messages?: DBMessage[];
 };
 
 export default function AiConversation({
-  messages = defaultMessages,
+  messages: propMessages,
 }: ChatProps) {
+  const { currentConversationId } = useAppStore();
+  const [messages, setMessages] = useState<DBMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load messages when conversation changes
+  useEffect(() => {
+    const loadMessages = async () => {
+      if (!currentConversationId) {
+        setMessages([]);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const conversationMessages = await MessageService.getMessages(currentConversationId);
+        setMessages(conversationMessages);
+      } catch (error) {
+        console.error('Error loading messages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMessages();
+  }, [currentConversationId]);
+
+  // Poll for new messages (for real-time updates)
+  useEffect(() => {
+    if (!currentConversationId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const conversationMessages = await MessageService.getMessages(currentConversationId);
+        setMessages(conversationMessages);
+      } catch (error) {
+        console.error('Error polling messages:', error);
+      }
+    }, 1000); // Poll every second
+
+    return () => clearInterval(interval);
+  }, [currentConversationId]);
+
   const actions = [
-    {
-      icon: RefreshCcwIcon,
-      label: "Retry",
-    },
-    {
-      icon: ThumbsUpIcon,
-      label: "Like",
-    },
-    {
-      icon: ThumbsDownIcon,
-      label: "Dislike",
-    },
     {
       icon: CopyIcon,
       label: "Copy",
+    },
+    {
+      icon: RefreshCcwIcon,
+      label: "Regenerate",
+    },
+    {
+      icon: ThumbsUpIcon,
+      label: "Good response",
+    },
+    {
+      icon: ThumbsDownIcon,
+      label: "Bad response",
     },
     {
       icon: ShareIcon,
       label: "Share",
     },
   ];
+
+  if (isLoading && messages.length === 0) {
+    return (
+      <Conversation className="h-full">
+        <ConversationContent className="h-full flex items-center justify-center">
+          <Loader />
+        </ConversationContent>
+      </Conversation>
+    );
+  }
 
   return (
     <Conversation className="h-full">
@@ -79,11 +112,14 @@ export default function AiConversation({
           <div key={message.id}>
             <Message from={message.role} key={message.id}>
               <MessageContent>
-                <Response>{message.content}</Response>
+                {message.metadata?.isLoading ? (
+                  <Loader />
+                ) : (
+                  <Response>{message.content}</Response>
+                )}
               </MessageContent>
-        
             </Message>
-            {message.from === "assistant" && (
+            {message.role === "assistant" && !message.metadata?.isLoading && (
               <Actions className="">
                 {actions.map((action) => (
                   <Action key={action.label} label={action.label} tooltip={action.label}>

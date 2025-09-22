@@ -1,14 +1,17 @@
+"use client"
+
 import AiConversation from "@/components/custom/ai_conversation";
 import AiInput from "@/components/custom/ai_input";
+import { useAppStore } from "@/store/appStore";
 
 export default function HomePage() {
   // This would ideally come from a state management solution
   // For now, we'll assume there are conversations (you can modify this logic)
-  const hasConversations = false; // This should be dynamic based on actual conversation state
+  const {currentConversationId} = useAppStore(); // This should be dynamic based on actual conversation state
 
   return (
     <main className="h-screen relative overflow-hidden">
-      {hasConversations ? (
+      {currentConversationId != null ? (
         <>
           {/* Conversation takes full screen height and goes behind input */}
           <div className="absolute inset-0 overflow-hidden">

@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/shadcn-io/ai/image";
 import type { Model } from "@/types/provider";
 import { OPENROUTER_FREE_MODELS } from "@/types/provider";
+import { MessageService } from "@/lib/database";
+import { toast } from "sonner";
 
 interface AttachedImage {
   file: File;
@@ -38,7 +40,7 @@ const AiInput = () => {
   
   const selectedProvider = useSelectedProvider();
   const selectedModel = useSelectedModel();
-  const { setSelectedModel } = useAppStore();
+  const { setSelectedModel, createConversation, currentConversationId, refreshConversation } = useAppStore();
   const previousProviderRef = useRef<string | null>(null);
 
   // Memoize available models to prevent unnecessary recalculations
@@ -192,26 +194,76 @@ const AiInput = () => {
     setAttachedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
     if (!text && attachedImages.length === 0) {
       return;
     }
 
     if (!selectedProvider) {
-      alert("Please select a provider first");
+      toast.error("Please select a provider first");
       return;
     }
 
-    setStatus("submitted");
-    setTimeout(() => {
-      setStatus("streaming");
-    }, 200);
-    setTimeout(() => {
-      setStatus("ready");
+    if (!selectedModel) {
+      toast.error("Please select a model first");
+      return;
+    }
+
+    try {
+      setStatus("submitted");
+      
+      // Get or create conversation
+      let conversationId = currentConversationId;
+      if (!conversationId) {
+        // Create new conversation with first few words of the message as name
+        const conversationName = text.length > 30 ? text.substring(0, 30) + "..." : text;
+        conversationId = await createConversation(conversationName);
+      }
+
+      // Add user message to conversation
+      await MessageService.addMessage({
+        conversationId,
+        role: 'user',
+        content: text,
+        model: selectedModel.id,
+        provider: selectedProvider.id,
+        metadata: {
+          images: attachedImages.map(img => ({
+            name: img.file.name,
+            type: img.file.type,
+            base64: img.base64
+          }))
+        }
+      });
+
+      // Add AI loading message
+      await MessageService.addMessage({
+        conversationId,
+        role: 'assistant',
+        content: '',
+        model: selectedModel.id,
+        provider: selectedProvider.id,
+        metadata: {
+          isLoading: true
+        }
+      });
+
+      // Refresh conversation metadata
+      await refreshConversation(conversationId);
+
+      // Clear input
       setText("");
       setAttachedImages([]);
-    }, 2000);
+      setStatus("streaming");
+      
+      // TODO: Add actual AI response logic here later
+      
+    } catch (error) {
+      console.error('Error handling message submission:', error);
+      setStatus("error");
+      toast.error("Failed to send message. Please try again.");
+    }
   };
 
   return (
