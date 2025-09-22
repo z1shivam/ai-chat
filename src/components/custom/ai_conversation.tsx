@@ -17,9 +17,6 @@ import { Image } from "../ui/shadcn-io/ai/image";
 import {
   CopyIcon,
   RefreshCcwIcon,
-  ShareIcon,
-  ThumbsDownIcon,
-  ThumbsUpIcon,
 } from "lucide-react";
 import { useAppStore } from "@/store/appStore";
 import { MessageService, type DBMessage } from "@/lib/database";
@@ -30,7 +27,7 @@ type ChatProps = {
   messages?: DBMessage[];
 };
 
-// Hook for streaming text that returns the current displayed content
+
 function useStreamingText(content: string, isComplete: boolean): string {
   const [displayedContent, setDisplayedContent] = useState(content);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -90,7 +87,9 @@ function useStreamingText(content: string, isComplete: boolean): string {
         setDisplayedContent(content.slice(0, newIndex));
         
         // Trigger scroll to bottom for each update
-        setTimeout(() => scrollToBottom(), 10);
+        setTimeout(() => {
+          void scrollToBottom();
+        }, 10);
         
         return newIndex;
       });
@@ -116,10 +115,9 @@ function useStreamingText(content: string, isComplete: boolean): string {
 
 // Component for individual message that can use hooks
 function MessageItem({ message }: { message: DBMessage }) {
-  // Use streaming text hook for assistant messages
-  const displayContent = message.role === 'assistant' 
-    ? useStreamingText(message.content, !message.metadata?.isLoading)
-    : message.content;
+  // Always call the hook, but use the result conditionally
+  const streamedContent = useStreamingText(message.content, !message.metadata?.isLoading);
+  const displayContent = message.role === 'assistant' ? streamedContent : message.content;
 
   const actions = [
     {
@@ -129,18 +127,6 @@ function MessageItem({ message }: { message: DBMessage }) {
     {
       icon: RefreshCcwIcon,
       label: "Regenerate",
-    },
-    {
-      icon: ThumbsUpIcon,
-      label: "Good response",
-    },
-    {
-      icon: ThumbsDownIcon,
-      label: "Bad response",
-    },
-    {
-      icon: ShareIcon,
-      label: "Share",
     },
   ];
 
@@ -217,28 +203,30 @@ function ConversationMessages() {
       }
     };
 
-    loadMessages();
+    void loadMessages();
   }, [currentConversationId]);
 
   // Poll for new messages (for real-time updates)
   useEffect(() => {
     if (!currentConversationId) return;
 
-    const interval = setInterval(async () => {
-      try {
-        const conversationMessages = await MessageService.getMessages(currentConversationId);
-        
-        // Only update if messages actually changed to avoid unnecessary re-renders
-        setMessages(prevMessages => {
-          if (JSON.stringify(prevMessages) !== JSON.stringify(conversationMessages)) {
-            return conversationMessages;
-          }
-          return prevMessages;
-        });
-      } catch (error) {
-        console.error('Error polling messages:', error);
-        toast.error('Failed to refresh messages');
-      }
+    const interval = setInterval(() => {
+      void (async () => {
+        try {
+          const conversationMessages = await MessageService.getMessages(currentConversationId);
+          
+          // Only update if messages actually changed to avoid unnecessary re-renders
+          setMessages(prevMessages => {
+            if (JSON.stringify(prevMessages) !== JSON.stringify(conversationMessages)) {
+              return conversationMessages;
+            }
+            return prevMessages;
+          });
+        } catch (error) {
+          console.error('Error polling messages:', error);
+          toast.error('Failed to refresh messages');
+        }
+      })();
     }, 1000); // Poll every second
 
     return () => clearInterval(interval);
@@ -249,7 +237,9 @@ function ConversationMessages() {
     const hasLoadingMessage = messages.some(msg => msg.metadata?.isLoading);
     if (hasLoadingMessage || messages.length > 0) {
       // Use a small delay to ensure the DOM has updated
-      setTimeout(() => scrollToBottom(), 10);
+      setTimeout(() => {
+        void scrollToBottom();
+      }, 10);
     }
   }, [messages, scrollToBottom]);
 
@@ -271,7 +261,7 @@ function ConversationMessages() {
 }
 
 export default function AiConversation({
-  messages: propMessages,
+  messages: _propMessages,
 }: ChatProps) {
   return (
     <Conversation className="h-full">

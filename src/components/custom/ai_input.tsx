@@ -18,7 +18,6 @@ import React from "react";
 import { useAppStore, useSelectedProvider, useSelectedModel } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/shadcn-io/ai/image";
-import type { Model } from "@/types/provider";
 import { OPENROUTER_FREE_MODELS } from "@/types/provider";
 import { MessageService } from "@/lib/database";
 import { toast } from "sonner";
@@ -77,7 +76,7 @@ const AiInput = () => {
 
   // Reset model selection only when provider actually changes
   React.useEffect(() => {
-    const currentProviderId = selectedProvider?.id || null;
+    const currentProviderId = selectedProvider?.id ?? null;
     
     // Check if provider actually changed
     if (previousProviderRef.current !== currentProviderId) {
@@ -196,25 +195,26 @@ const AiInput = () => {
     setAttachedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+  const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-    if (!text && attachedImages.length === 0) {
-      return;
-    }
+    void (async () => {
+      if (!text && attachedImages.length === 0) {
+        return;
+      }
 
-    if (isProcessing) {
-      return; // Prevent multiple submissions
-    }
+      if (isProcessing) {
+        return; // Prevent multiple submissions
+      }
 
-    if (!selectedProvider) {
-      toast.error("Please select a provider first");
-      return;
-    }
+      if (!selectedProvider) {
+        toast.error("Please select a provider first");
+        return;
+      }
 
-    if (!selectedModel) {
-      toast.error("Please select a model first");
-      return;
-    }
+      if (!selectedModel) {
+        toast.error("Please select a model first");
+        return;
+      }
 
     try {
       // Validate provider and model selection
@@ -316,43 +316,47 @@ const AiInput = () => {
         provider: selectedProvider,
         model: selectedModel,
         messages,
-        onChunk: async (chunk: string) => {
+        onChunk: (chunk: string) => {
           aiResponse += chunk;
           
           // Update the database with the current response
           // Don't await this to keep streaming smooth
-          MessageService.updateMessageData(aiMessageId, {
+          void MessageService.updateMessageData(aiMessageId, {
             content: aiResponse,
             metadata: { isLoading: false }
           }).catch(error => {
             console.error('Error updating message during streaming:', error);
           });
         },
-        onComplete: async (fullResponse: string) => {
+        onComplete: (fullResponse: string) => {
           // Final update with complete response
-          try {
-            await MessageService.updateMessageData(aiMessageId, {
-              content: fullResponse,
-              metadata: { isLoading: false }
-            });
-            await refreshConversation(conversationId);
-          } catch (error) {
-            console.error('Error finalizing AI response:', error);
-            toast.error('Failed to save AI response');
-          }
-          setStatus("ready");
-          setIsProcessing(false);
+          void (async () => {
+            try {
+              await MessageService.updateMessageData(aiMessageId, {
+                content: fullResponse,
+                metadata: { isLoading: false }
+              });
+              await refreshConversation(conversationId);
+            } catch (error) {
+              console.error('Error finalizing AI response:', error);
+              toast.error('Failed to save AI response');
+            }
+            setStatus("ready");
+            setIsProcessing(false);
+          })();
         },
-        onError: async (error: Error) => {
+        onError: (error: Error) => {
           // Remove the loading message and show error
-          try {
-            await MessageService.deleteMessage(aiMessageId);
-          } catch (dbError) {
-            console.error('Error cleaning up failed message:', dbError);
-          }
-          toast.error(`AI Error: ${error.message}`);
-          setStatus("error");
-          setIsProcessing(false);
+          void (async () => {
+            try {
+              await MessageService.deleteMessage(aiMessageId);
+            } catch (dbError) {
+              console.error('Error cleaning up failed message:', dbError);
+            }
+            toast.error(`AI Error: ${error.message}`);
+            setStatus("error");
+            setIsProcessing(false);
+          })();
         }
       });
       
@@ -365,6 +369,7 @@ const AiInput = () => {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast.error(`Failed to send message: ${errorMessage}`);
     }
+    })();
   };
 
   return (

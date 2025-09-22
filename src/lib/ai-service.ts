@@ -49,8 +49,8 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
     }
 
     let baseURL = '';
-    let apiKey = provider.apiKey;
-    let headers: Record<string, string> = {
+    const apiKey = provider.apiKey;
+    const headers: Record<string, string> = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     };
@@ -69,7 +69,7 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
         }
         break;
       case 'openai':
-        baseURL = provider.baseURL || 'https://api.openai.com/v1';
+        baseURL = provider.baseURL ?? 'https://api.openai.com/v1';
         break;
       case 'custom':
         baseURL = provider.baseURL;
@@ -83,7 +83,7 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
         }
         break;
       default:
-        throw new Error(`Unsupported provider type: ${(provider as any).type}`);
+        throw new Error(`Unsupported provider type: ${(provider as { type: string }).type}`);
     }
 
     let response: Response;
@@ -97,7 +97,7 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
           stream: true,
         }),
       });
-    } catch (fetchError) {
+    } catch {
       throw new Error(`Network error: Unable to connect to AI service. Please check your internet connection.`);
     }
 
@@ -133,7 +133,11 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
         // Try to get more detailed error message from response body
         const errorBody = await response.text();
         if (errorBody) {
-          const errorData = JSON.parse(errorBody);
+          const errorData = JSON.parse(errorBody) as {
+            error?: { message?: string };
+            message?: string;
+            detail?: string;
+          };
           
           if (errorData.error?.message) {
             errorMessage = errorData.error.message;
@@ -143,7 +147,7 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
             errorMessage = errorData.detail;
           }
         }
-      } catch (e) {
+      } catch {
         // If we can't parse the error response, use the default message
       }
       
@@ -180,19 +184,23 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
             if (data === '[DONE]') break;
 
             try {
-              const parsed = JSON.parse(data);
+              const parsed = JSON.parse(data) as {
+                choices?: Array<{
+                  delta?: { content?: string };
+                }>;
+              };
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 // For very smooth streaming, emit character by character if content is long
                 if (content.length > 1) {
                   for (let i = 0; i < content.length; i++) {
-                    const char = content[i];
+                    const char = content[i]!;
                     fullResponse += char;
                     onChunk?.(char);
                     
                     // Small delay for smoother appearance (only for long chunks)
                     if (content.length > 5 && i < content.length - 1) {
-                      await new Promise(resolve => setTimeout(resolve, 5));
+                      await new Promise<void>(resolve => setTimeout(resolve, 5));
                     }
                   }
                 } else {
@@ -209,7 +217,7 @@ export async function generateAIResponse(options: AIServiceOptions): Promise<str
         }
       }
     } finally {
-      reader.cancel();
+      void reader.cancel();
     }
 
     onComplete?.(fullResponse);
