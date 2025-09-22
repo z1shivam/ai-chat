@@ -66,14 +66,14 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex w-full items-center gap-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-[250px] justify-between"
+            className="w-fit justify-between"
           >
             {selectedProvider ? (
               <span className="truncate">

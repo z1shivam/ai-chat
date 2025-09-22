@@ -13,22 +13,32 @@ import {
 } from "@/components/ui/sidebar";
 import { Plus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { ProviderSelector } from "./provider-selector";
+import { useAppStore } from "@/store/appStore";
 
 export function AppSidebar() {
+  const {setProviderModelOpen} = useAppStore()
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between px-2 py-1 group-data-[collapsible=icon]:hidden">
             <Avatar>
-              <AvatarImage src={"https://avatars.githubusercontent.com/u/118415844?v=4"}/>
+              <AvatarImage
+                src={"https://avatars.githubusercontent.com/u/118415844?v=4"}
+              />
               <AvatarFallback>z1</AvatarFallback>
             </Avatar>
-            <SidebarTrigger className="p-5"/>
+            <SidebarTrigger className="p-5" />
           </SidebarMenuItem>
 
-          <SidebarMenuItem className="hidden group-data-[collapsible=icon]:flex justify-center px-2 py-2">
+          <SidebarMenuItem className="hidden justify-center px-2 py-2 group-data-[collapsible=icon]:flex">
             <SidebarTrigger />
+          </SidebarMenuItem>
+          <SidebarMenuItem className="block">
+            <ProviderSelector
+                            onAddProvider={() => setProviderModelOpen(true)}
+                          />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

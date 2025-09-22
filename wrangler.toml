@@ -1,0 +1,5 @@
+name = "ai"
+compatibility_date = "2025-09-03"
+
+[assets]
+directory = "./out"
