@@ -2,6 +2,7 @@ import { AppSidebar } from "@/components/custom/app-sidebar";
 import Header from "@/components/custom/header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { ProviderProvider } from "@/contexts/provider-context";
 import "@/styles/globals.css";
 
@@ -45,6 +46,7 @@ export default function RootLayout({
           </SidebarProvider>
         </ProviderProvider>
           </ThemeProvider>
+          <Toaster closeButton />
       </body>
     </html>
   );

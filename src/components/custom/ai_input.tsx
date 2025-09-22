@@ -22,6 +22,7 @@ import type { Model } from "@/types/provider";
 import { OPENROUTER_FREE_MODELS } from "@/types/provider";
 import { MessageService } from "@/lib/database";
 import { toast } from "sonner";
+import { generateAIResponse, prepareMessagesWithImages, buildConversationHistory } from "@/lib/ai-service";
 
 interface AttachedImage {
   file: File;
@@ -33,6 +34,7 @@ const AiInput = () => {
   const [text, setText] = useState<string>("");
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<
     "submitted" | "streaming" | "ready" | "error"
   >("ready");
@@ -200,6 +202,10 @@ const AiInput = () => {
       return;
     }
 
+    if (isProcessing) {
+      return; // Prevent multiple submissions
+    }
+
     if (!selectedProvider) {
       toast.error("Please select a provider first");
       return;
@@ -211,6 +217,23 @@ const AiInput = () => {
     }
 
     try {
+      // Validate provider and model selection
+      if (!selectedProvider) {
+        toast.error("Please select a provider before sending a message.");
+        return;
+      }
+      
+      if (!selectedModel) {
+        toast.error("Please select a model before sending a message.");
+        return;
+      }
+      
+      if (!selectedProvider.apiKey || selectedProvider.apiKey.trim() === '') {
+        toast.error("Please configure your API key in the provider settings.");
+        return;
+      }
+
+      setIsProcessing(true);
       setStatus("submitted");
       
       // Get or create conversation
@@ -221,24 +244,28 @@ const AiInput = () => {
         conversationId = await createConversation(conversationName);
       }
 
+      // Prepare user message with images
+      const userMessageContent = {
+        text,
+        images: attachedImages.map(img => ({
+          name: img.file.name,
+          type: img.file.type,
+          base64: img.base64
+        }))
+      };
+
       // Add user message to conversation
-      await MessageService.addMessage({
+      const userMessageId = await MessageService.addMessage({
         conversationId,
         role: 'user',
         content: text,
         model: selectedModel.id,
         provider: selectedProvider.id,
-        metadata: {
-          images: attachedImages.map(img => ({
-            name: img.file.name,
-            type: img.file.type,
-            base64: img.base64
-          }))
-        }
+        metadata: userMessageContent
       });
 
       // Add AI loading message
-      await MessageService.addMessage({
+      const aiMessageId = await MessageService.addMessage({
         conversationId,
         role: 'assistant',
         content: '',
@@ -256,13 +283,87 @@ const AiInput = () => {
       setText("");
       setAttachedImages([]);
       setStatus("streaming");
+
+      // Get conversation history for AI context
+      let conversationMessages;
+      try {
+        conversationMessages = await MessageService.getMessages(conversationId);
+      } catch (error) {
+        console.error('Error loading conversation history:', error);
+        toast.error('Failed to load conversation history');
+        throw error;
+      }
       
-      // TODO: Add actual AI response logic here later
+      const previousMessages = conversationMessages
+        .filter(msg => msg.id !== userMessageId && msg.id !== aiMessageId)
+        .map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
+
+      // Prepare current message with images
+      const currentMessage = prepareMessagesWithImages(
+        text,
+        attachedImages.map(img => ({ base64: img.base64, type: img.file.type }))
+      );
+
+      const messages = buildConversationHistory(currentMessage, previousMessages);
+
+      // Generate AI response with streaming
+      let aiResponse = '';
+      
+      await generateAIResponse({
+        provider: selectedProvider,
+        model: selectedModel,
+        messages,
+        onChunk: async (chunk: string) => {
+          aiResponse += chunk;
+          
+          // Update the database with the current response
+          // Don't await this to keep streaming smooth
+          MessageService.updateMessageData(aiMessageId, {
+            content: aiResponse,
+            metadata: { isLoading: false }
+          }).catch(error => {
+            console.error('Error updating message during streaming:', error);
+          });
+        },
+        onComplete: async (fullResponse: string) => {
+          // Final update with complete response
+          try {
+            await MessageService.updateMessageData(aiMessageId, {
+              content: fullResponse,
+              metadata: { isLoading: false }
+            });
+            await refreshConversation(conversationId);
+          } catch (error) {
+            console.error('Error finalizing AI response:', error);
+            toast.error('Failed to save AI response');
+          }
+          setStatus("ready");
+          setIsProcessing(false);
+        },
+        onError: async (error: Error) => {
+          // Remove the loading message and show error
+          try {
+            await MessageService.deleteMessage(aiMessageId);
+          } catch (dbError) {
+            console.error('Error cleaning up failed message:', dbError);
+          }
+          toast.error(`AI Error: ${error.message}`);
+          setStatus("error");
+          setIsProcessing(false);
+        }
+      });
       
     } catch (error) {
       console.error('Error handling message submission:', error);
       setStatus("error");
-      toast.error("Failed to send message. Please try again.");
+      setIsProcessing(false);
+      
+      // Show specific error message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error(`Failed to send message: ${errorMessage}`);
     }
   };
 
@@ -322,11 +423,13 @@ const AiInput = () => {
             onChange={(e) => setText(e.target.value)}
             value={text}
             placeholder={
-              selectedProvider
+              isProcessing
+                ? "Processing your message..."
+                : selectedProvider
                 ? "Type your message..."
                 : "Please select a provider first..."
             }
-            disabled={!selectedProvider}
+            disabled={!selectedProvider || isProcessing}
           />
           <PromptInputToolbar>
             <PromptInputTools>
@@ -341,7 +444,7 @@ const AiInput = () => {
               <PromptInputButton
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={!selectedProvider}
+                disabled={!selectedProvider || isProcessing}
                 title="Add images"
               >
                 <ImageIcon size={16} />
@@ -368,15 +471,15 @@ const AiInput = () => {
                 </PromptInputModelSelect>
               )}
 
-              {!selectedProvider && (
+              {(!selectedProvider || isProcessing) && (
                 <div className="px-2 text-sm text-gray-500">
-                  No provider selected
+                  {isProcessing ? "Processing..." : "No provider selected"}
                 </div>
               )}
             </PromptInputTools>
             <PromptInputSubmit
               disabled={
-                (!text && attachedImages.length === 0) || !selectedProvider
+                (!text && attachedImages.length === 0) || !selectedProvider || isProcessing
               }
               status={status}
             />

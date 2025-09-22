@@ -138,6 +138,13 @@ class MessageService {
   }
 
   /**
+   * Update a message with full data
+   */
+  static async updateMessageData(messageId: string, updates: Partial<Omit<DBMessage, 'id'>>): Promise<void> {
+    await db.messages.update(messageId, updates);
+  }
+
+  /**
    * Delete a specific message
    */
   static async deleteMessage(messageId: string): Promise<void> {
