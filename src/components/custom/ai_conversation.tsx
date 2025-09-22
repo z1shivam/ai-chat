@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -50,7 +49,6 @@ type ChatProps = {
 export default function AiConversation({
   messages = defaultMessages,
 }: ChatProps) {
-  const [input, setInput] = useState("");
   const actions = [
     {
       icon: RefreshCcwIcon,

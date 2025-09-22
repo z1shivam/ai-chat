@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { ProviderSelector } from "./provider-selector";
 import { AddProviderDialog } from "./add-provider-dialog";
-import { useTheme } from "next-themes";
 import { ModeToggle } from "../theme-toggle";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useAppStore } from "@/store/appStore";

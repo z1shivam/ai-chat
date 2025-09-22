@@ -9,7 +9,7 @@ export interface DBMessage {
   timestamp: Date;
   model?: string;
   provider?: string;
-  metadata?: Record<string, any>; // For storing additional data like token counts, etc.
+  metadata?: Record<string, unknown>; // For storing additional data like token counts, etc.
 }
 
 // Conversation metadata interface (lightweight version without messages)
@@ -59,8 +59,8 @@ class MessageService {
    */
   static async getMessagesPaginated(
     conversationId: string, 
-    limit: number = 50, 
-    offset: number = 0
+    limit = 50, 
+    offset = 0
   ): Promise<DBMessage[]> {
     const allMessages = await db.messages
       .where('conversationId')
@@ -75,7 +75,7 @@ class MessageService {
   /**
    * Get the latest N messages for a conversation
    */
-  static async getLatestMessages(conversationId: string, count: number = 10): Promise<DBMessage[]> {
+  static async getLatestMessages(conversationId: string, count = 10): Promise<DBMessage[]> {
     const allMessages = await db.messages
       .where('conversationId')
       .equals(conversationId)
@@ -223,8 +223,8 @@ class ConversationService {
   static async getConversations(): Promise<DBConversation[]> {
     const conversations = await db.conversations.toArray();
     return conversations.sort((a, b) => {
-      const aTime = a.lastMessageAt?.getTime() || a.updatedAt.getTime();
-      const bTime = b.lastMessageAt?.getTime() || b.updatedAt.getTime();
+      const aTime = a.lastMessageAt?.getTime() ?? a.updatedAt.getTime();
+      const bTime = b.lastMessageAt?.getTime() ?? b.updatedAt.getTime();
       return bTime - aTime;
     });
   }
@@ -286,7 +286,10 @@ class DatabaseService {
    */
   static async importData(jsonData: string): Promise<void> {
     try {
-      const data = JSON.parse(jsonData);
+      const data = JSON.parse(jsonData) as {
+        conversations?: DBConversation[];
+        messages?: DBMessage[];
+      };
       
       await db.transaction('rw', [db.conversations, db.messages], async () => {
         if (data.conversations) {
