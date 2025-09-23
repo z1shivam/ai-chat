@@ -374,7 +374,7 @@ const AiInput = () => {
 
   return (
     <div
-      className="bg-transparent relative w-full pb-3 backdrop-blur-lg"
+      className="relative w-full pb-3 "
       onDragOver={handleDragOver}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
