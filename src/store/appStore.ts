@@ -35,7 +35,7 @@ export const useAppStore = create<AppState>()(
       settings: defaultSettings,
       sidebarOpen: true,
       providerModelOpen: false,
-      isLoading: false,
+      isResponding: false,
       inputInCenter: true,
       createConversation: async (name?: string) => {
         const id = generateId();
@@ -67,6 +67,7 @@ export const useAppStore = create<AppState>()(
             state.currentConversationId === id
               ? null
               : state.currentConversationId,
+          messages: []
         }));
       },
 
@@ -253,8 +254,8 @@ export const useAppStore = create<AppState>()(
         set((state) => ({ sidebarOpen: !state.sidebarOpen }));
       },
 
-      setLoading: (loading: boolean) => {
-        set({ isLoading: loading });
+      setIsResponding: (loading: boolean) => {
+        set({ isResponding: loading });
       },
 
       setInputInCenter: (state: boolean) => {
@@ -336,5 +337,5 @@ export const useSelectedProvider = () =>
 export const useSelectedModel = () =>
   useAppStore((state) => state.selectedModel);
 export const useSettings = () => useAppStore((state) => state.settings);
-export const useIsLoading = () => useAppStore((state) => state.isLoading);
+export const useisResponding = () => useAppStore((state) => state.isResponding);
 export const useSidebarOpen = () => useAppStore((state) => state.sidebarOpen);

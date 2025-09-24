@@ -1,4 +1,5 @@
 "use client";
+import { Image } from "@/components/ui/shadcn-io/ai/image";
 import {
   PromptInput,
   PromptInputButton,
@@ -12,18 +13,16 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "@/components/ui/shadcn-io/ai/prompt-input";
-import { useAppStore } from "@/store/appStore";
-import { ImageIcon, MicIcon, PaperclipIcon, XIcon } from "lucide-react";
-import { type FormEventHandler, useEffect, useRef, useState } from "react";
-import { Button } from "../ui/button";
-import { Image } from "@/components/ui/shadcn-io/ai/image";
-import { toast } from "sonner";
-import { MessageService } from "@/lib/database";
 import {
   buildConversationHistory,
   prepareMessagesWithImages,
 } from "@/lib/ai-service";
-import { tokens } from "./test";
+import { MessageService } from "@/lib/database";
+import { useAppStore } from "@/store/appStore";
+import { ImageIcon, XIcon } from "lucide-react";
+import { type FormEventHandler, useRef, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "../ui/button";
 
 interface AttachedImage {
   file: File;
@@ -42,6 +41,7 @@ export default function AiInput() {
     refreshConversation,
     addMessage,
     updateMessage,
+    setIsResponding
   } = useAppStore();
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -81,6 +81,7 @@ export default function AiInput() {
           return;
         }
 
+        setIsResponding(true)
         setIsProcessing(true);
         setStatus("submitted");
         setText("");
@@ -146,18 +147,6 @@ export default function AiInput() {
           },
         });
 
-        let currentContent = "";
-        let index = 0;
-        const interval = setInterval(() => {
-          if (index < tokens.length) {
-            currentContent += tokens[index];
-            updateMessage(aiMessageId, currentContent);
-            index++;
-          } else {
-            clearInterval(interval);
-          }
-        }, 30);
-
         let conversationMessages;
         try {
           conversationMessages =
@@ -188,6 +177,110 @@ export default function AiInput() {
           previousMessages,
         );
 
+        let baseURL = "";
+        const apiKey = selectedProvider.apiKey;
+        const headers: Record<string, string> = {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        };
+
+        switch (selectedProvider.type) {
+          case "openrouter":
+            baseURL = "https://openrouter.ai/api/v1";
+            // Add OpenRouter specific headers if they exist
+            if (selectedProvider.defaultHeaders) {
+              Object.entries(selectedProvider.defaultHeaders).forEach(
+                ([key, value]) => {
+                  if (value !== undefined) {
+                    headers[key] = value;
+                  }
+                },
+              );
+            }
+            break;
+          case "openai":
+            baseURL = selectedProvider.baseURL ?? "https://api.openai.com/v1";
+            break;
+          case "custom":
+            baseURL = selectedProvider.baseURL;
+            if (selectedProvider.defaultHeaders) {
+              Object.entries(selectedProvider.defaultHeaders).forEach(
+                ([key, value]) => {
+                  if (value !== undefined) {
+                    headers[key] = value;
+                  }
+                },
+              );
+            }
+            break;
+          default:
+            throw new Error(
+              `Unsupported provider type: ${(selectedProvider as { type: string }).type}`,
+            );
+        }
+
+        let aires = "";
+        let response: Response;
+        try {
+          response = await fetch(`${baseURL}/chat/completions`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              model: selectedModel.id,
+              messages,
+              stream: true,
+            }),
+          });
+        } catch {
+          throw new Error(
+            `Network error: Unable to connect to AI service. Please check your internet connection.`,
+          );
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error("Response body is not readable");
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            while (true) {
+              const lineEnd = buffer.indexOf("\n");
+              if (lineEnd === -1) break;
+
+              const line = buffer.slice(0, lineEnd).trim();
+              buffer = buffer.slice(lineEnd + 1);
+
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6);
+                if (data === "[DONE]") break;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices[0].delta.content;
+                  if (content) {
+                    updateMessage(aiMessageId, aires);
+                    aires += content;
+                  }
+                } catch (e) {}
+              }
+            }
+          }
+          updateMessage(aiMessageId, aires)
+          MessageService.updateMessage(aiMessageId, aires);
+        } finally {
+          reader.cancel();
+        }
+
+        setIsResponding(false)
         setIsProcessing(false);
         setStatus("ready");
       } catch (error) {}

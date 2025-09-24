@@ -48,7 +48,7 @@ export interface AppState {
   // UI State
   sidebarOpen: boolean;
   providerModelOpen: boolean;
-  isLoading: boolean;
+  isResponding: boolean;
   inputInCenter: boolean;
 
   // Conversation Actions
@@ -84,7 +84,7 @@ export interface AppState {
   setSidebarOpen: (open: boolean) => void;
   setProviderModelOpen: (open: boolean) => void;
   toggleSidebar: () => void;
-  setLoading: (loading: boolean) => void;
+  setIsResponding: (loading: boolean) => void;
   setInputInCenter: (state: boolean) => void;
 
   // Utility Actions
