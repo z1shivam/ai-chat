@@ -46,7 +46,7 @@ export default function RootLayout({
           </SidebarProvider>
         </ProviderProvider>
           </ThemeProvider>
-          <Toaster closeButton />
+          <Toaster closeButton position="top-center"/>
       </body>
     </html>
   );

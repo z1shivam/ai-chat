@@ -28,10 +28,10 @@ export const useAppStore = create<AppState>()(
       currentConversationId: null,
       messages: [],
       messagesLoading: false,
-      providers: [],
-      selectedProvider: null,
-      selectedModel: null,
-      availableModels: [],
+      providers: [defaultProvider],
+      selectedProvider: defaultProvider,
+      selectedModel: defaultModel,
+      availableModels: [defaultModel],
       settings: defaultSettings,
       sidebarOpen: true,
       providerModelOpen: false,
@@ -298,6 +298,7 @@ export const useAppStore = create<AppState>()(
 
         set({
           conversations: [],
+          messages:[],
           currentConversationId: null,
         });
       },

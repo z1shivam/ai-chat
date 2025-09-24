@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
-import { PlusIcon, ChevronDownIcon, Trash2Icon } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from "react";
+import { PlusIcon, ChevronDownIcon, Trash2Icon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -10,12 +10,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from "@/components/ui/command";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -23,9 +23,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { useAppStore } from '@/store/appStore';
-import type { ProviderConfig } from '@/types/provider';
+} from "@/components/ui/dialog";
+import { useAppStore } from "@/store/appStore";
+import type { ProviderConfig } from "@/types/provider";
 
 interface ProviderSelectorProps {
   onAddProvider: () => void;
@@ -34,9 +34,11 @@ interface ProviderSelectorProps {
 export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
   const [open, setOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [providerToDelete, setProviderToDelete] = useState<ProviderConfig | null>(null);
-  
-  const { providers, selectedProvider, setSelectedProvider, deleteProvider } = useAppStore();
+  const [providerToDelete, setProviderToDelete] =
+    useState<ProviderConfig | null>(null);
+
+  const { providers, selectedProvider, setSelectedProvider, deleteProvider } =
+    useAppStore();
 
   const handleSelectProvider = (provider: ProviderConfig) => {
     setSelectedProvider(provider);
@@ -81,7 +83,9 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
                 {getProviderDisplayName(selectedProvider)}
               </span>
             ) : (
-              <span className="text-muted-foreground">No provider selected</span>
+              <span className="text-muted-foreground">
+                No provider selected
+              </span>
             )}
             <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -97,26 +101,28 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
                     key={provider.id}
                     value={provider.id}
                     onSelect={() => handleSelectProvider(provider)}
-                    className="cursor-pointer group"
+                    className="group cursor-pointer"
                   >
-                    <div className="flex items-center justify-between w-full">
+                    <div className="flex w-full items-center justify-between">
                       <div className="flex flex-col gap-1">
                         <span className="font-medium">{provider.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {provider.type === 'openrouter' && 'OpenRouter'}
-                          {provider.type === 'openai' && 'OpenAI'}
-                          {provider.type === 'custom' && 'Custom Provider'}
+                        <span className="text-muted-foreground text-xs">
+                          {provider.type === "openrouter" && "OpenRouter"}
+                          {provider.type === "openai" && "OpenAI"}
+                          {provider.type === "custom" && "Custom Provider"}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={(e) => handleDeleteClick(e, provider)}
-                        title="Delete provider"
-                      >
-                        <Trash2Icon className="h-4 w-4" />
-                      </Button>
+                      {provider.name != "Default" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:bg-destructive hover:text-destructive-foreground h-8 w-8 p-0 transition-opacity"
+                          onClick={(e) => handleDeleteClick(e, provider)}
+                          title="Delete provider"
+                        >
+                          <Trash2Icon className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </CommandItem>
                 ))}
@@ -125,7 +131,7 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
           </Command>
         </PopoverContent>
       </Popover>
-      
+
       <Button
         variant="outline"
         size="icon"
@@ -140,7 +146,8 @@ export function ProviderSelector({ onAddProvider }: ProviderSelectorProps) {
           <DialogHeader>
             <DialogTitle>Delete Provider</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the provider &quot;{providerToDelete?.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete the provider &quot;
+              {providerToDelete?.name}&quot;? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

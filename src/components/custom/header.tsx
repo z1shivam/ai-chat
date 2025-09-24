@@ -6,9 +6,22 @@ import { AddProviderDialog } from "./add-provider-dialog";
 import { ModeToggle } from "../theme-toggle";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useAppStore } from "@/store/appStore";
+import { Button } from "../ui/button";
+import { MessageCirclePlus, Plus } from "lucide-react";
 
 export default function Header() {
-  const { providerModelOpen, setProviderModelOpen } = useAppStore();
+  const {
+    providerModelOpen,
+    setProviderModelOpen,
+    conversations,
+    createConversation,
+  } = useAppStore();
+
+  const handleNewChat = async () => {
+    const totalChats = conversations.length;
+    const newChatName = `Untitled ${totalChats + 1}`;
+    await createConversation(newChatName);
+  };
   return (
     <>
       <header className="bg-background/50 border-secondary fixed top-0 z-40 h-14 w-full border-b backdrop-blur-md">
@@ -26,7 +39,12 @@ export default function Header() {
                 onAddProvider={() => setProviderModelOpen(true)}
               />
             </div>
-            <ModeToggle />
+            <div className="flex gap-3">
+              <Button variant={"outline"} size={"icon"} className="flex md:hidden">
+                <MessageCirclePlus />
+              </Button>
+              <ModeToggle />
+            </div>
           </div>
         </div>
       </header>

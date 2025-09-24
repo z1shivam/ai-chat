@@ -41,11 +41,12 @@ export default function AiInput() {
     refreshConversation,
     addMessage,
     updateMessage,
-    setIsResponding
+    setIsResponding,
   } = useAppStore();
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const [text, setText] = useState<string>("");
   const [status, setStatus] = useState<
@@ -81,11 +82,6 @@ export default function AiInput() {
           return;
         }
 
-        setIsResponding(true)
-        setIsProcessing(true);
-        setStatus("submitted");
-        setText("");
-        setAttachedImages([]);
         let conversationId = currentConversationId;
         if (!conversationId) {
           const conversationName =
@@ -147,6 +143,11 @@ export default function AiInput() {
           },
         });
 
+        setIsResponding(true);
+        setIsProcessing(true);
+        setStatus("submitted");
+        setText("");
+        setAttachedImages([]);
         let conversationMessages;
         try {
           conversationMessages =
@@ -274,16 +275,26 @@ export default function AiInput() {
               }
             }
           }
-          updateMessage(aiMessageId, aires)
+          updateMessage(aiMessageId, aires);
           MessageService.updateMessage(aiMessageId, aires);
         } finally {
           reader.cancel();
         }
 
-        setIsResponding(false)
+        setIsResponding(false);
         setIsProcessing(false);
         setStatus("ready");
-      } catch (error) {}
+        setTimeout(() => {
+          textAreaRef.current?.focus();
+        }, 200);
+      } catch (error) {
+        setIsResponding(false);
+        setIsProcessing(false);
+        setStatus("error");
+        setTimeout(() => {
+          textAreaRef.current?.focus();
+        }, 200);
+      }
     })();
   };
 
@@ -360,9 +371,13 @@ export default function AiInput() {
         </div>
       )}
 
-      <PromptInput onSubmit={handleSubmit} autoFocus>
+      <PromptInput
+        onSubmit={handleSubmit}
+        className="focus-within:ring-2 focus-within:ring-secondary transition-all duration-200 rounded-lg"
+      >
         <PromptInputTextarea
           onChange={(e) => setText(e.target.value)}
+          ref={textAreaRef}
           value={text}
           placeholder={
             isProcessing
@@ -372,6 +387,7 @@ export default function AiInput() {
                 : "Please select a provider first..."
           }
           disabled={!selectedProvider || isProcessing}
+          autoFocus
         />
         <PromptInputToolbar>
           <PromptInputTools>

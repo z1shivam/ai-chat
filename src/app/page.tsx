@@ -17,7 +17,7 @@ export default function HomePage() {
       {showCenteredInput ? (
         <>
           <div className="flex h-full flex-col items-center justify-center gap-4">
-            <div className="text-foreground/80 pb-2 text-2xl font-medium md:pb-6">
+            <div className="text-foreground/80 pb-0 text-2xl font-medium md:pb-4">
               What&apos;s on your mind today?
             </div>
             <div className="w-full max-w-3xl px-4 lg:px-0">

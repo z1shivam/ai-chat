@@ -1,5 +1,21 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Sidebar,
   SidebarContent,
@@ -12,36 +28,20 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { DatabaseService } from "@/lib/database";
 import { useAppStore } from "@/store/appStore";
 import {
-  MessageCircle,
-  Plus,
-  Trash,
-  MoreHorizontal,
   Edit2,
-  Trash2,
+  MessageCircle,
+  MessageCirclePlus,
+  MoreHorizontal,
+  Trash,
+  Trash2
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { ProviderSelector } from "./provider-selector";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { DatabaseService } from "@/lib/database";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { ProviderSelector } from "./provider-selector";
 
 export function AppSidebar() {
   const {
@@ -155,7 +155,7 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleNewChat}>
-                  <Plus /> <span className="font-semibold">New Chat</span>
+                  <MessageCirclePlus /> <span className="font-semibold">New Chat</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -222,7 +222,7 @@ export function AppSidebar() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleDeleteClick(conv.id)}
-                                className="text-red-600 hover:text-red-700"
+                                className="text-red-400 hover:text-red-300 font-semibold"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete

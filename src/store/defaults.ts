@@ -19,7 +19,7 @@ export const defaultProvider: ProviderConfig = {
   id: "default",
   name: "Default",
   type: "openrouter",
-  apiKey: "sk-or-v1-somekey",
+  apiKey: "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",
   baseURL: "https://openrouter.ai/api/v1",
   selectedModels: ["x-ai/grok-4-fast:free"],
 };

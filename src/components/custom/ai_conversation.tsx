@@ -42,41 +42,41 @@ export default function AiConversation({ messages: _propMessages }: ChatProps) {
 
   return (
     <Conversation className="h-full">
-      <ConversationContent className="pb-36 max-w-3xl mx-auto">
+      <ConversationContent className="mx-auto max-w-3xl pb-36">
         {messages.map((message) => {
           return (
-            <Message from={message.role} key={message.id}>
-              <MessageContent>
-                <>
-                  {message.role === "user" &&
-                    message.metadata?.images &&
-                    Array.isArray(message.metadata.images) && (
-                      <div className="flex flex-wrap gap-2">
-                        {(
-                          message.metadata.images as Array<{
-                            base64: string;
-                            type: string;
-                            name: string;
-                          }>
-                        ).map((image, index) => (
-                          <div key={index} className="relative">
-                            <Image
-                              base64={image.base64}
-                              uint8Array={new Uint8Array()}
-                              mediaType={image.type}
-                              alt={image.name || `Image ${index + 1}`}
-                              className="max-w-sm rounded-lg border"
-                            />
-                            <div className="text-muted-foreground mt-1 max-w-sm truncate text-xs">
-                              {image.name || `Image ${index + 1}`}
-                            </div>
+            <Message from={message.role} key={message.id} className="flex-col">
+              <>
+                {message.role === "user" &&
+                  message.metadata?.images &&
+                  Array.isArray(message.metadata.images) && (
+                    <div className="flex flex-wrap gap-2">
+                      {(
+                        message.metadata.images as Array<{
+                          base64: string;
+                          type: string;
+                          name: string;
+                        }>
+                      ).map((image, index) => (
+                        <div key={index} className="relative">
+                          <Image
+                            base64={image.base64}
+                            uint8Array={new Uint8Array()}
+                            mediaType={image.type}
+                            alt={image.name || `Image ${index + 1}`}
+                            className="max-w-sm rounded-lg border "
+                          />
+                          <div className="text-muted-foreground mt-1 max-w-sm truncate text-xs">
+                            {image.name.slice(0,12) || `Image ${index + 1}`}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                <MessageContent>
                   <Response>{message.content}</Response>
-                </>
-              </MessageContent>
+                </MessageContent>
+              </>
             </Message>
           );
         })}
