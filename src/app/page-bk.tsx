@@ -9,7 +9,7 @@ export default function HomePage() {
   const showCenteredInput = messages.length === 0;
 
   return (
-    <main className="relative h-svh overflow-hidden">
+    <main className="relative h-dvh overflow-hidden">
       <div className="hidden"> 
         {/* just to make it run */}
         <AiConversation />

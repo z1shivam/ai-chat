@@ -373,7 +373,7 @@ export default function AiInput() {
 
       <PromptInput
         onSubmit={handleSubmit}
-        className="focus-within:ring-2 focus-within:ring-secondary transition-all duration-200 rounded-lg"
+        className="focus-within:ring-secondary rounded-lg transition-all duration-200 focus-within:ring-2"
       >
         <PromptInputTextarea
           onChange={(e) => setText(e.target.value)}
