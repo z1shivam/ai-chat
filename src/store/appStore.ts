@@ -1,124 +1,33 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ProviderConfig, Model } from "@/types/provider";
-
-// Import database types and services
+import {
+  type ProviderConfig,
+  type Model,
+  type OpenRouterProviderConfig,
+  OPENROUTER_FREE_MODELS,
+} from "@/types/provider";
 import {
   ConversationService,
   DatabaseService,
-  type DBMessage,
+  MessageService,
   type DBConversation,
+  type DBMessage,
 } from "@/lib/database";
 
-// Conversation types (lightweight version without messages)
-export interface Conversation {
-  id: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
-  model?: string;
-  provider?: string;
-  messageCount: number;
-  lastMessageAt?: Date;
-}
+import type { AppState, Conversation, AppSettings } from "./types";
+import { defaultSettings, defaultProvider, defaultModel } from "./defaults";
+import { generateId, generateConversationName } from "./utils";
 
-// Re-export message type for convenience
-export type { DBMessage as Message };
-
-// App settings types
-export interface AppSettings {
-  theme: "light" | "dark" | "system";
-  fontSize: "small" | "medium" | "large";
-  autoSave: boolean;
-  showTimestamps: boolean;
-  maxConversationHistory: number;
-  defaultSystemPrompt: string;
-  enableStreaming: boolean;
-  temperature: number;
-  maxTokens: number;
-}
-
-// Main app state interface
-interface AppState {
-  // Conversations
-  conversations: Conversation[];
-  currentConversationId: string | null;
-
-  // Providers and Models
-  providers: ProviderConfig[];
-  selectedProvider: ProviderConfig | null;
-  selectedModel: Model | null;
-  availableModels: Model[];
-
-  // App Settings
-  settings: AppSettings;
-
-  // UI State
-  sidebarOpen: boolean;
-  providerModelOpen: boolean;
-  isLoading: boolean;
-
-  // Conversation Actions
-  createConversation: (name?: string) => Promise<string>;
-  deleteConversation: (id: string) => Promise<void>;
-  renameConversation: (id: string, newName: string) => Promise<void>;
-  setCurrentConversation: (id: string | null) => void;
-  getCurrentConversation: () => Conversation | null;
-  loadConversations: () => Promise<void>;
-  refreshConversation: (conversationId: string) => Promise<void>;
-
-  // Provider Actions
-  addProvider: (provider: ProviderConfig) => void;
-  updateProvider: (id: string, updatedProvider: ProviderConfig) => void;
-  deleteProvider: (id: string) => void;
-  setSelectedProvider: (provider: ProviderConfig | null) => void;
-  setAvailableModels: (models: Model[]) => void;
-  setSelectedModel: (model: Model | null) => void;
-
-  // Settings Actions
-  updateSettings: (settings: Partial<AppSettings>) => void;
-  resetSettings: () => void;
-
-  // UI Actions
-  setSidebarOpen: (open: boolean) => void;
-  setProviderModelOpen: (open: boolean) => void;
-  toggleSidebar: () => void;
-  setLoading: (loading: boolean) => void;
-
-  // Utility Actions
-  exportConversations: () => string;
-  importConversations: (data: string) => void;
-  clearAllData: () => Promise<void>;
-}
-
-// Default settings
-const defaultSettings: AppSettings = {
-  theme: "system",
-  fontSize: "medium",
-  autoSave: true,
-  showTimestamps: true,
-  maxConversationHistory: 100,
-  defaultSystemPrompt: "You are a helpful AI assistant.",
-  enableStreaming: true,
-  temperature: 0.7,
-  maxTokens: 4000,
-};
-
-// Utility function to generate unique IDs
-const generateId = () =>
-  `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-// Utility function to generate conversation name
-const generateConversationName = () => {
-  return `New Conversation ${new Date().toLocaleDateString()}`;
-};
+export type { Conversation, AppSettings } from "./types";
+export type { DBMessage as Message } from "@/lib/database";
 
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
-      // Initial state
       conversations: [],
       currentConversationId: null,
+      messages: [],
+      messagesLoading: false,
       providers: [],
       selectedProvider: null,
       selectedModel: null,
@@ -127,8 +36,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
       providerModelOpen: false,
       isLoading: false,
-
-      // Conversation Actions
+      inputInCenter: true,
       createConversation: async (name?: string) => {
         const id = generateId();
         const conversation: DBConversation = {
@@ -173,6 +81,13 @@ export const useAppStore = create<AppState>()(
 
       setCurrentConversation: (id: string | null) => {
         set({ currentConversationId: id });
+        if (id) {
+          // Load messages for the new conversation
+          get().loadMessages(id);
+        } else {
+          // Clear messages when no conversation is selected
+          get().clearMessages();
+        }
       },
 
       getCurrentConversation: () => {
@@ -201,11 +116,71 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      // Provider Actions
+      // Message Actions
+      loadMessages: async (conversationId: string) => {
+        if (!conversationId) {
+          set({ messages: [], messagesLoading: false });
+          return;
+        }
+
+        set({ messagesLoading: true });
+        try {
+          const conversationMessages =
+            await MessageService.getMessages(conversationId);
+          set({ messages: conversationMessages, messagesLoading: false });
+        } catch (error) {
+          console.error("Error loading messages:", error);
+          set({ messages: [], messagesLoading: false });
+          throw error;
+        }
+      },
+
+      addMessage: (message: DBMessage) => {
+        set((state) => ({
+          messages: [...state.messages, message],
+        }));
+      },
+
+      updateMessage: (messageId: string, content: string) => {
+        set((state) => ({
+          messages: state.messages.map((msg) =>
+            msg.id === messageId ? { ...msg, content } : msg,
+          ),
+        }));
+      },
+
+      deleteMessage: (messageId: string) => {
+        set((state) => ({
+          messages: state.messages.filter((msg) => msg.id !== messageId),
+        }));
+      },
+
+      clearMessages: () => {
+        set({ messages: [] });
+      },
+
+      setMessagesLoading: (loading: boolean) => {
+        set({ messagesLoading: loading });
+      },
+
       addProvider: (provider: ProviderConfig) => {
+        function isOpenRouterConfig(
+          config: ProviderConfig,
+        ): config is OpenRouterProviderConfig {
+          return config.type === "openrouter";
+        }
+        let models: Model[] = [];
+        if (isOpenRouterConfig(provider)) {
+          const modelsId = provider.selectedModels;
+          models = OPENROUTER_FREE_MODELS.filter((model) =>
+            modelsId.includes(model.id),
+          );
+        }
         set((state) => ({
           providers: [...state.providers, provider],
           selectedProvider: provider, // Auto-select the newly added provider
+          availableModels: models,
+          selectedModel: models[0]
         }));
       },
 
@@ -230,9 +205,22 @@ export const useAppStore = create<AppState>()(
       },
 
       setSelectedProvider: (provider: ProviderConfig | null) => {
+        function isOpenRouterConfig(
+          config: ProviderConfig,
+        ): config is OpenRouterProviderConfig {
+          return config.type === "openrouter";
+        }
+        let models: Model[] = [];
+        if (provider !== null && isOpenRouterConfig(provider)) {
+          const modelsId = provider.selectedModels;
+          models = OPENROUTER_FREE_MODELS.filter((model) =>
+            modelsId.includes(model.id),
+          );
+        }
         set({
           selectedProvider: provider,
-          selectedModel: null, // Reset model when provider changes
+          availableModels: models,
+          selectedModel: models[0],
         });
       },
 
@@ -244,7 +232,6 @@ export const useAppStore = create<AppState>()(
         set({ selectedModel: model });
       },
 
-      // Settings Actions
       updateSettings: (newSettings: Partial<AppSettings>) => {
         set((state) => ({
           settings: { ...state.settings, ...newSettings },
@@ -255,7 +242,6 @@ export const useAppStore = create<AppState>()(
         set({ settings: defaultSettings });
       },
 
-      // UI Actions
       setSidebarOpen: (open: boolean) => {
         set({ sidebarOpen: open });
       },
@@ -271,7 +257,10 @@ export const useAppStore = create<AppState>()(
         set({ isLoading: loading });
       },
 
-      // Utility Actions
+      setInputInCenter: (state: boolean) => {
+        set({ inputInCenter: state });
+      },
+
       exportConversations: () => {
         const state = get();
         return JSON.stringify(
@@ -292,7 +281,10 @@ export const useAppStore = create<AppState>()(
             settings?: Partial<AppSettings>;
           };
           set((state) => ({
-            conversations: [...(parsed.conversations ?? []), ...state.conversations],
+            conversations: [
+              ...(parsed.conversations ?? []),
+              ...state.conversations,
+            ],
             settings: { ...state.settings, ...(parsed.settings ?? {}) },
           }));
         } catch (error) {
@@ -301,10 +293,8 @@ export const useAppStore = create<AppState>()(
       },
 
       clearAllData: async () => {
-        // Clear database first
         await DatabaseService.clearAllData();
-        
-        // Clear store
+
         set({
           conversations: [],
           currentConversationId: null,
@@ -318,6 +308,7 @@ export const useAppStore = create<AppState>()(
         currentConversationId: state.currentConversationId,
         providers: state.providers,
         selectedProvider: state.selectedProvider,
+        availableModels: state.availableModels,
         selectedModel: state.selectedModel,
         settings: state.settings,
         sidebarOpen: state.sidebarOpen,
@@ -332,11 +323,13 @@ export const useAppStore = create<AppState>()(
   ),
 );
 
-// Selector hooks for commonly used state
 export const useCurrentConversation = () =>
   useAppStore((state) => state.getCurrentConversation());
 export const useConversations = () =>
   useAppStore((state) => state.conversations);
+export const useMessages = () => useAppStore((state) => state.messages);
+export const useMessagesLoading = () =>
+  useAppStore((state) => state.messagesLoading);
 export const useProviders = () => useAppStore((state) => state.providers);
 export const useSelectedProvider = () =>
   useAppStore((state) => state.selectedProvider);

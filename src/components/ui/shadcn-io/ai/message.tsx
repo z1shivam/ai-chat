@@ -14,7 +14,7 @@ export type MessageProps = HTMLAttributes<HTMLDivElement> & {
 export const Message = ({ className, from, ...props }: MessageProps) => (
   <div
     className={cn(
-      'group flex w-full items-end justify-end gap-2 pt-5 pb-0',
+      'group flex w-full items-end justify-end gap-2 pt-8 pb-0',
       from === 'user' ? 'is-user [&>div]:max-w-[70%]' : 'is-assistant flex-row-reverse justify-end [&>div]:max-w-[100%]',
       className
     )}

@@ -39,7 +39,7 @@ export interface CustomProviderConfig extends BaseProviderConfig {
   selectedModels: Model[]; // Custom models defined by user
 }
 
-export type ProviderConfig = OpenAIProviderConfig | OpenRouterProviderConfig | CustomProviderConfig;
+export type ProviderConfig =  OpenRouterProviderConfig | CustomProviderConfig | OpenAIProviderConfig;
 
 export interface ProviderContextType {
   providers: ProviderConfig[];

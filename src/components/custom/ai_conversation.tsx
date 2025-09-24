@@ -1,9 +1,9 @@
 "use client";
 
-import { MessageService, type DBMessage } from "@/lib/database";
+import { type DBMessage } from "@/lib/database";
 import { useAppStore } from "@/store/appStore";
 import { LoaderCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
   Conversation,
@@ -18,42 +18,30 @@ type ChatProps = {
 };
 
 export default function AiConversation({ messages: _propMessages }: ChatProps) {
-  const { currentConversationId } = useAppStore();
-  const [messages, setMessages] = useState<DBMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { 
+    currentConversationId, 
+    messages, 
+    messagesLoading, 
+    loadMessages
+  } = useAppStore();
 
   useEffect(() => {
-    const loadMessages = async () => {
+    const handleLoadMessages = async () => {
       if (!currentConversationId) {
-        setMessages([]);
         return;
       }
 
-      setIsLoading(true);
       try {
-        const conversationMessages = await MessageService.getMessages(
-          currentConversationId,
-        );
-        setMessages([
-          ...conversationMessages,
-          {
-            id: crypto.randomUUID(),
-            conversationId: currentConversationId ?? "",
-            role: "user",
-            content: "how is the day",
-            timestamp: new Date(),
-          },
-        ]);
+        await loadMessages(currentConversationId);
+        console.log(messages)
       } catch (error) {
         console.error("Error loading messages:", error);
         toast.error("Failed to load conversation messages");
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    void loadMessages();
-  }, [currentConversationId]);
+    void handleLoadMessages();
+  }, [currentConversationId, loadMessages]);
 
   return (
     <Conversation className="h-full">
@@ -67,8 +55,8 @@ export default function AiConversation({ messages: _propMessages }: ChatProps) {
             </Message>
           );
         })}
-        {isLoading && (
-          <div className="pb-8">
+        {messagesLoading && (
+          <div className="pb-8 w-full flex items-center justify-center">
             <LoaderCircle className="size-5 animate-spin" />
           </div>
         )}
