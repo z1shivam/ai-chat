@@ -28,12 +28,12 @@ export default function HomePage() {
       ) : (
         <>
           <div className="absolute inset-0 overflow-hidden">
-            <div className="mx-auto h-full max-w-3xl">
+            <div className="h-full w-full">
               <AiConversation />
             </div>
           </div>
-          <div className="bg-background/50 absolute right-0 bottom-0 left-0 z-10 backdrop-blur-md">
-            <div className="mx-auto max-w-3xl px-4 lg:px-0">
+          <div className="bg-transparent absolute right-0 bottom-0 left-0 z-10">
+            <div className="mx-auto max-w-4xl px-4 lg:px-14 bg-background/50 backdrop-blur-md ">
               <AiInput />
             </div>
           </div>

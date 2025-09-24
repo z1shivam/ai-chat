@@ -42,7 +42,7 @@ export default function AiConversation({ messages: _propMessages }: ChatProps) {
 
   return (
     <Conversation className="h-full">
-      <ConversationContent className="pb-36">
+      <ConversationContent className="pb-36 max-w-3xl mx-auto">
         {messages.map((message) => {
           return (
             <Message from={message.role} key={message.id}>

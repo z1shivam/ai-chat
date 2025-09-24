@@ -119,11 +119,11 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    -ms-overflow-style: none; /* IE 10+ */
-    scrollbar-width: none; /* Firefox */
+    /* -ms-overflow-style: none;
+    scrollbar-width: none;  */
   }
   *::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    /* display: none; */
   }
   body {
     @apply bg-background text-foreground;
