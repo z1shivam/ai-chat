@@ -28,7 +28,7 @@ export const defaultProvider: ProviderConfig = {
 export const defaultModel: Model = {
   id: "x-ai/grok-4-fast:free",
   name: "grok-4-fast",
-  displayName: "Grok 4 Fast (Free)",
+  displayName: "Grok 4 Fast",
   inputCost: 0,
   outputCost: 0,
   contextLength: 128000,

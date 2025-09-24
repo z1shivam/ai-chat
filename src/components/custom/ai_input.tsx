@@ -18,6 +18,7 @@ import {
   prepareMessagesWithImages,
 } from "@/lib/ai-service";
 import { MessageService } from "@/lib/database";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAppStore } from "@/store/appStore";
 import { ImageIcon, XIcon } from "lucide-react";
 import { type FormEventHandler, useRef, useState } from "react";
@@ -45,6 +46,7 @@ export default function AiInput() {
   } = useAppStore();
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isMobile = useIsMobile();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -280,21 +282,25 @@ export default function AiInput() {
           updateMessage(aiMessageId, aires);
           void MessageService.updateMessage(aiMessageId, aires);
         } finally {
-          reader.cancel();
+          void reader.cancel();
         }
 
         setIsResponding(false);
         setIsProcessing(false);
         setStatus("ready");
         setTimeout(() => {
-          textAreaRef.current?.focus();
+          if (!isMobile) {
+            textAreaRef.current?.focus();
+          }
         }, 200);
       } catch {
         setIsResponding(false);
         setIsProcessing(false);
         setStatus("error");
         setTimeout(() => {
-          textAreaRef.current?.focus();
+          if (!isMobile) {
+            textAreaRef.current?.focus();
+          }
         }, 200);
       }
     })();
@@ -342,7 +348,7 @@ export default function AiInput() {
   };
 
   return (
-    <div className="w-full px-0 py-2">
+    <div className="w-full px-0 pt-2 pb-3">
       {attachedImages.length > 0 && (
         <div className="relative z-10 mb-4 flex flex-wrap gap-3">
           {attachedImages.map((image, index) => (
@@ -389,7 +395,6 @@ export default function AiInput() {
                 : "Please select a provider first..."
           }
           disabled={!selectedProvider || isProcessing}
-          autoFocus
         />
         <PromptInputToolbar>
           <PromptInputTools>

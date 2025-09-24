@@ -18,7 +18,7 @@ export default function HomePage() {
         <>
           <div className="flex h-full flex-col items-center justify-center gap-4">
             <div className="text-foreground/80 pb-0 text-2xl font-medium md:pb-4">
-              What&apos;s on your mind today?
+              Arre kehna kya chahte ho?
             </div>
             <div className="w-full max-w-3xl px-4 lg:px-0">
               <AiInput />
@@ -33,7 +33,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="bg-transparent absolute right-0 bottom-0 left-0 z-10">
-            <div className="mx-auto max-w-4xl px-4 lg:px-14 bg-background/50 backdrop-blur-md ">
+            <div className="mx-auto max-w-4xl px-3 lg:px-14 bg-background/50 backdrop-blur-md ">
               <AiInput />
             </div>
           </div>
