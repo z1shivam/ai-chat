@@ -265,18 +265,20 @@ export default function AiInput() {
                 if (data === "[DONE]") break;
 
                 try {
-                  const parsed = JSON.parse(data);
-                  const content = parsed.choices[0].delta.content;
+                  const parsed = JSON.parse(data) as { choices: Array<{ delta: { content?: string } }> };
+                  const content = parsed.choices?.[0]?.delta?.content;
                   if (content) {
                     updateMessage(aiMessageId, aires);
                     aires += content;
                   }
-                } catch (e) {}
+                } catch {
+                  // Ignore parsing errors for streaming data
+                }
               }
             }
           }
           updateMessage(aiMessageId, aires);
-          MessageService.updateMessage(aiMessageId, aires);
+          void MessageService.updateMessage(aiMessageId, aires);
         } finally {
           reader.cancel();
         }
@@ -287,7 +289,7 @@ export default function AiInput() {
         setTimeout(() => {
           textAreaRef.current?.focus();
         }, 200);
-      } catch (error) {
+      } catch {
         setIsResponding(false);
         setIsProcessing(false);
         setStatus("error");

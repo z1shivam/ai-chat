@@ -1,9 +1,9 @@
 'use client';
 import { Response } from '@/components/ui/shadcn-io/ai/response';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const Example = () => {
-  const [content, setContent] = useState('');
+  const [content] = useState('');
  
   return (
       <div className="w-full">

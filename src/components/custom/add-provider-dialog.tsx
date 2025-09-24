@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { v4 as uuidv4 } from 'uuid';
 import {
   Dialog,
   DialogContent,
@@ -85,7 +86,7 @@ export function AddProviderDialog({
     setIsSubmitting(true);
 
     const provider: OpenRouterProviderConfig = {
-      id: String(Math.floor(Math.random() * 878778)),
+      id: uuidv4(),
       name: openRouterForm.name,
       type: "openrouter",
       apiKey: openRouterForm.apiKey,
@@ -113,7 +114,7 @@ export function AddProviderDialog({
     setIsSubmitting(true);
 
     const provider: OpenAIProviderConfig = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: openAIForm.name,
       type: "openai",
       apiKey: openAIForm.apiKey,
@@ -145,7 +146,7 @@ export function AddProviderDialog({
     setIsSubmitting(true);
 
     const provider: CustomProviderConfig = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: customForm.name,
       type: "custom",
       apiKey: customForm.apiKey,

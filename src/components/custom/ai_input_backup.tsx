@@ -324,7 +324,7 @@ const AiInput = () => {
             content: aiResponse,
             metadata: { isLoading: false }
           }).catch(error => {
-            toast.error(error)
+            toast.error(error instanceof Error ? error.message : String(error))
           });
         },
         onComplete: (fullResponse: string) => {
@@ -336,7 +336,7 @@ const AiInput = () => {
                 metadata: { isLoading: false }
               });
               await refreshConversation(conversationId);
-            } catch (error) {
+            } catch {
               toast.error('Failed to save AI response');
             }
             setStatus("ready");

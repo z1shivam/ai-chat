@@ -7,7 +7,7 @@ import { ModeToggle } from "../theme-toggle";
 import { SidebarTrigger } from "../ui/sidebar";
 import { useAppStore } from "@/store/appStore";
 import { Button } from "../ui/button";
-import { MessageCirclePlus, Plus } from "lucide-react";
+import { MessageCirclePlus } from "lucide-react";
 
 export default function Header() {
   const {
@@ -16,7 +16,6 @@ export default function Header() {
     conversations,
     createConversation,
   } = useAppStore();
-
   const handleNewChat = async () => {
     const totalChats = conversations.length;
     const newChatName = `Untitled ${totalChats + 1}`;
@@ -40,7 +39,12 @@ export default function Header() {
               />
             </div>
             <div className="flex gap-3">
-              <Button variant={"outline"} size={"icon"} className="flex md:hidden">
+              <Button
+                variant={"outline"}
+                size={"icon"}
+                className="flex md:hidden"
+                onClick={handleNewChat}
+              >
                 <MessageCirclePlus />
               </Button>
               <ModeToggle />

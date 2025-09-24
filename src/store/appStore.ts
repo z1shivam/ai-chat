@@ -84,7 +84,7 @@ export const useAppStore = create<AppState>()(
         set({ currentConversationId: id });
         if (id) {
           // Load messages for the new conversation
-          get().loadMessages(id);
+          void get().loadMessages(id);
         } else {
           // Clear messages when no conversation is selected
           get().clearMessages();
@@ -338,5 +338,5 @@ export const useSelectedProvider = () =>
 export const useSelectedModel = () =>
   useAppStore((state) => state.selectedModel);
 export const useSettings = () => useAppStore((state) => state.settings);
-export const useisResponding = () => useAppStore((state) => state.isResponding);
+export const useIsResponding = () => useAppStore((state) => state.isResponding);
 export const useSidebarOpen = () => useAppStore((state) => state.sidebarOpen);

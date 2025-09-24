@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
+import { v4 as uuidv4 } from 'uuid';
 
 // Message interface for database storage
 export interface DBMessage {
@@ -93,7 +94,7 @@ class MessageService {
   static async addMessage(message: Omit<DBMessage, 'id' | 'timestamp'>): Promise<string> {
     const newMessage: DBMessage = {
       ...message,
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: uuidv4(),
       timestamp: new Date(),
     };
 
@@ -115,7 +116,7 @@ class MessageService {
     const newMessages: DBMessage[] = messages.map(msg => ({
       ...msg,
       conversationId,
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: uuidv4(),
       timestamp: new Date(),
     }));
 
