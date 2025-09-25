@@ -87,7 +87,7 @@ export default function AiInput() {
         let conversationId = currentConversationId;
         if (!conversationId) {
           const conversationName =
-            text.length > 30 ? text.substring(0, 30) + "..." : text;
+            text.length > 30 ? text.substring(0, 10) + "..." : text;
           conversationId = await createConversation(conversationName);
         }
 

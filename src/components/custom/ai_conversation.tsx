@@ -30,7 +30,6 @@ export default function AiConversation({ messages: _propMessages }: ChatProps) {
 
       try {
         await loadMessages(currentConversationId);
-        console.log(messages);
       } catch (error) {
         console.error("Error loading messages:", error);
         toast.error("Failed to load conversation messages");

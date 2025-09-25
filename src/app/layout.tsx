@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/custom/app-sidebar";
 import Header from "@/components/custom/header";
+import { InstallAppPrompt } from "@/components/custom/install-app-prompt";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
@@ -89,6 +90,7 @@ export default function RootLayout({
           </SidebarProvider>
         </ProviderProvider>
           </ThemeProvider>
+          <InstallAppPrompt />
           <Toaster closeButton position="top-center"/>
       </body>
     </html>

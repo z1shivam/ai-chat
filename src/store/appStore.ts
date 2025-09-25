@@ -56,19 +56,35 @@ export const useAppStore = create<AppState>()(
           currentConversationId: id,
         }));
 
+        // Update URL with new chat ID
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.set('chat', id);
+          window.history.replaceState({}, '', url.toString());
+        }
+
         return id;
       },
 
       deleteConversation: async (id: string) => {
         await ConversationService.deleteConversation(id);
+        const wasCurrentConversation = get().currentConversationId === id;
+        
         set((state) => ({
           conversations: state.conversations.filter((c) => c.id !== id),
           currentConversationId:
             state.currentConversationId === id
               ? null
               : state.currentConversationId,
-          messages: []
+          messages: wasCurrentConversation ? [] : state.messages
         }));
+
+        // If we deleted the current conversation, remove chat param from URL
+        if (wasCurrentConversation && typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('chat');
+          window.history.replaceState({}, '', url.toString());
+        }
       },
 
       renameConversation: async (id: string, newName: string) => {
@@ -85,9 +101,21 @@ export const useAppStore = create<AppState>()(
         if (id) {
           // Load messages for the new conversation
           void get().loadMessages(id);
+          // Update URL with chat ID
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('chat', id);
+            window.history.replaceState({}, '', url.toString());
+          }
         } else {
           // Clear messages when no conversation is selected
           get().clearMessages();
+          // Remove chat param from URL
+          if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('chat');
+            window.history.replaceState({}, '', url.toString());
+          }
         }
       },
 
@@ -98,6 +126,11 @@ export const useAppStore = create<AppState>()(
             (c) => c.id === state.currentConversationId,
           ) ?? null
         );
+      },
+
+      getConversationById: (id: string) => {
+        const state = get();
+        return state.conversations.find((c) => c.id === id) ?? null;
       },
 
       loadConversations: async () => {
@@ -301,6 +334,13 @@ export const useAppStore = create<AppState>()(
           messages:[],
           currentConversationId: null,
         });
+
+        // Clear chat param from URL
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('chat');
+          window.history.replaceState({}, '', url.toString());
+        }
       },
     }),
     {

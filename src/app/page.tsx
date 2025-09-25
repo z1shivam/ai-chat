@@ -3,14 +3,47 @@
 import AiConversation from "@/components/custom/ai_conversation";
 import AiInput from "@/components/custom/ai_input";
 import { useAppStore } from "@/store/appStore";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useEffect, Suspense } from "react";
+import { toast } from "sonner";
 
-export default function HomePage() {
-  const { messages } = useAppStore();
+function HomePageContent() {
+  const { messages, setCurrentConversation, getConversationById, loadConversations } = useAppStore();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleChatFromUrl = async () => {
+      const chatId = searchParams.get("chat");
+      if (!chatId) {
+        // Clear current conversation and messages when no chat param
+        setCurrentConversation(null);
+        return;
+      }
+
+      // Ensure conversations are loaded first
+      await loadConversations();
+      
+      // Check if the conversation exists using the helper function
+      const conversation = getConversationById(chatId);
+      
+      if (conversation) {
+        setCurrentConversation(chatId);
+      } else {
+        toast.error("Conversation not found");
+        // Remove invalid chat param from URL
+        router.replace("/");
+      }
+    };
+
+    void handleChatFromUrl();
+  }, [searchParams, setCurrentConversation, getConversationById, loadConversations, router]);
+
   const showCenteredInput = messages.length === 0;
 
   return (
     <main className="relative h-svh overflow-hidden">
-      <div className="hidden"> 
+      <div className="hidden">
         {/* just to make it run */}
         <AiConversation />
       </div>
@@ -32,13 +65,21 @@ export default function HomePage() {
               <AiConversation />
             </div>
           </div>
-          <div className="bg-transparent absolute right-0 bottom-0 left-0 z-10">
-            <div className="mx-auto max-w-4xl px-3 lg:px-14 bg-background/50 backdrop-blur-md ">
+          <div className="absolute right-0 bottom-0 left-0 z-10 bg-transparent">
+            <div className="bg-background/50 mx-auto max-w-4xl px-3 backdrop-blur-md lg:px-14">
               <AiInput />
             </div>
           </div>
         </>
       )}
     </main>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 }

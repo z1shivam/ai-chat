@@ -57,6 +57,7 @@ export interface AppState {
   renameConversation: (id: string, newName: string) => Promise<void>;
   setCurrentConversation: (id: string | null) => void;
   getCurrentConversation: () => Conversation | null;
+  getConversationById: (id: string) => Conversation | null;
   loadConversations: () => Promise<void>;
   refreshConversation: (conversationId: string) => Promise<void>;
 
