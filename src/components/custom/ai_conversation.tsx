@@ -39,12 +39,23 @@ export default function AiConversation({ messages: _propMessages }: ChatProps) {
     void handleLoadMessages();
   }, [currentConversationId, loadMessages]);
 
+  // Debug: Check for duplicate message IDs
+  useEffect(() => {
+    const messageIds = messages.map(m => m.id);
+    const uniqueIds = new Set(messageIds);
+    if (messageIds.length !== uniqueIds.size) {
+      console.error('Duplicate message IDs detected:', messageIds);
+      const duplicates = messageIds.filter((id, index) => messageIds.indexOf(id) !== index);
+      console.error('Duplicate IDs:', duplicates);
+    }
+  }, [messages]);
+
   return (
     <Conversation className="h-full">
       <ConversationContent className="mx-auto max-w-3xl pb-36">
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           return (
-            <Message from={message.role} key={message.id} className="flex-col">
+            <Message from={message.role} key={`${message.id}-${index}-${message.timestamp?.getTime() || Date.now()}`} className="flex-col">
               <>
                 {message.role === "user" &&
                   message.metadata?.images &&
@@ -57,7 +68,7 @@ export default function AiConversation({ messages: _propMessages }: ChatProps) {
                           name: string;
                         }>
                       ).map((image, index) => (
-                        <div key={index} className="relative">
+                        <div key={`${message.id}-image-${index}-${image.name || index}`} className="relative">
                           <Image
                             base64={image.base64}
                             uint8Array={new Uint8Array()}

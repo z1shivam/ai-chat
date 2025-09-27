@@ -56,7 +56,6 @@ export const useAppStore = create<AppState>()(
           currentConversationId: id,
         }));
 
-        // Update URL with new chat ID
         if (typeof window !== 'undefined') {
           const url = new URL(window.location.href);
           url.searchParams.set('chat', id);
@@ -79,7 +78,6 @@ export const useAppStore = create<AppState>()(
           messages: wasCurrentConversation ? [] : state.messages
         }));
 
-        // If we deleted the current conversation, remove chat param from URL
         if (wasCurrentConversation && typeof window !== 'undefined') {
           const url = new URL(window.location.href);
           url.searchParams.delete('chat');
@@ -99,18 +97,14 @@ export const useAppStore = create<AppState>()(
       setCurrentConversation: (id: string | null) => {
         set({ currentConversationId: id });
         if (id) {
-          // Load messages for the new conversation
           void get().loadMessages(id);
-          // Update URL with chat ID
           if (typeof window !== 'undefined') {
             const url = new URL(window.location.href);
             url.searchParams.set('chat', id);
             window.history.replaceState({}, '', url.toString());
           }
         } else {
-          // Clear messages when no conversation is selected
           get().clearMessages();
-          // Remove chat param from URL
           if (typeof window !== 'undefined') {
             const url = new URL(window.location.href);
             url.searchParams.delete('chat');
@@ -161,7 +155,13 @@ export const useAppStore = create<AppState>()(
         try {
           const conversationMessages =
             await MessageService.getMessages(conversationId);
-          set({ messages: conversationMessages, messagesLoading: false });
+          
+          // Filter out duplicate messages by ID to prevent key conflicts
+          const uniqueMessages = conversationMessages.filter((message, index, array) => 
+            array.findIndex(m => m.id === message.id) === index
+          );
+          
+          set({ messages: uniqueMessages, messagesLoading: false });
         } catch (error) {
           console.error("Error loading messages:", error);
           set({ messages: [], messagesLoading: false });
@@ -170,9 +170,17 @@ export const useAppStore = create<AppState>()(
       },
 
       addMessage: (message: DBMessage) => {
-        set((state) => ({
-          messages: [...state.messages, message],
-        }));
+        set((state) => {
+          // Check if message already exists to prevent duplicates
+          const messageExists = state.messages.some(msg => msg.id === message.id);
+          if (messageExists) {
+            console.warn(`Message with id ${message.id} already exists, skipping duplicate`);
+            return state;
+          }
+          return {
+            messages: [...state.messages, message],
+          };
+        });
       },
 
       updateMessage: (messageId: string, content: string) => {
@@ -212,7 +220,7 @@ export const useAppStore = create<AppState>()(
         }
         set((state) => ({
           providers: [...state.providers, provider],
-          selectedProvider: provider, // Auto-select the newly added provider
+          selectedProvider: provider, 
           availableModels: models,
           selectedModel: models[0]
         }));
@@ -335,7 +343,6 @@ export const useAppStore = create<AppState>()(
           currentConversationId: null,
         });
 
-        // Clear chat param from URL
         if (typeof window !== 'undefined') {
           const url = new URL(window.location.href);
           url.searchParams.delete('chat');
@@ -346,7 +353,6 @@ export const useAppStore = create<AppState>()(
     {
       name: "ai-chat-store",
       partialize: (state) => ({
-        // Don't persist conversations - they're in IndexedDB
         currentConversationId: state.currentConversationId,
         providers: state.providers,
         selectedProvider: state.selectedProvider,
@@ -356,7 +362,6 @@ export const useAppStore = create<AppState>()(
         sidebarOpen: state.sidebarOpen,
       }),
       onRehydrateStorage: () => (state) => {
-        // Load conversations from IndexedDB after rehydration
         if (state) {
           void state.loadConversations();
         }

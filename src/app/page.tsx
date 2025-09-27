@@ -8,43 +8,49 @@ import { useEffect, Suspense } from "react";
 import { toast } from "sonner";
 
 function HomePageContent() {
-  const { messages, setCurrentConversation, getConversationById, loadConversations } = useAppStore();
+  const { messages, setCurrentConversation, getConversationById, loadConversations, clearMessages} = useAppStore();
   const searchParams = useSearchParams();
   const router = useRouter();
 
   useEffect(() => {
     const handleChatFromUrl = async () => {
       const chatId = searchParams.get("chat");
+      
       if (!chatId) {
-        // Clear current conversation and messages when no chat param
         setCurrentConversation(null);
+        clearMessages();
+        // fuck hydration errros
+        if (typeof window !== 'undefined') {
+          const currentUrl = window.location.href;
+          const url = new URL(currentUrl);
+          if (url.searchParams.has('chat')) {
+            url.searchParams.delete('chat');
+            window.history.replaceState({}, '', url.toString());
+          }
+        }
         return;
       }
 
-      // Ensure conversations are loaded first
       await loadConversations();
       
-      // Check if the conversation exists using the helper function
       const conversation = getConversationById(chatId);
       
       if (conversation) {
         setCurrentConversation(chatId);
       } else {
         toast.error("Conversation not found");
-        // Remove invalid chat param from URL
         router.replace("/");
       }
     };
 
     void handleChatFromUrl();
-  }, [searchParams, setCurrentConversation, getConversationById, loadConversations, router]);
+  }, [searchParams, setCurrentConversation, getConversationById, loadConversations, router, clearMessages]);
 
   const showCenteredInput = messages.length === 0;
 
   return (
     <main className="relative h-svh overflow-hidden">
       <div className="hidden">
-        {/* just to make it run */}
         <AiConversation />
       </div>
       {showCenteredInput ? (
