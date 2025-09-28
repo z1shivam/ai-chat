@@ -232,6 +232,9 @@ export default function AiInput() {
               model: selectedModel.id,
               messages,
               stream: true,
+              provider: {
+                zdr: true
+              }
             }),
           });
         } catch {
