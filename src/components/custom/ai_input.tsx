@@ -20,6 +20,7 @@ import {
 import { MessageService } from "@/lib/database";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAppStore } from "@/store/appStore";
+import { defaultModel, zdrModel } from "@/store/defaults";
 import { ImageIcon, XIcon } from "lucide-react";
 import { type FormEventHandler, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -29,6 +30,15 @@ interface AttachedImage {
   file: File;
   preview: string;
   base64: string;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string | Array<{
+    type: "text" | "image_url";
+    text?: string;
+    image_url?: { url: string };
+  }>;
 }
 
 export default function AiInput() {
@@ -43,6 +53,7 @@ export default function AiInput() {
     addMessage,
     updateMessage,
     setIsResponding,
+    settings,
   } = useAppStore();
   const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -71,7 +82,10 @@ export default function AiInput() {
         return;
       }
 
-      if (!selectedModel) {
+      // Use ZDR model if ZDR is enabled, otherwise use selected model or default
+      const modelToUse = settings.zdrEnabled ? zdrModel : (selectedModel ?? defaultModel);
+      
+      if (!modelToUse) {
         toast.error("Please select a model first");
         return;
       }
@@ -104,7 +118,7 @@ export default function AiInput() {
           conversationId,
           role: "user",
           content: text,
-          model: selectedModel.id,
+          model: modelToUse.id,
           provider: selectedProvider.id,
           metadata: userMessageContent,
         });
@@ -113,7 +127,7 @@ export default function AiInput() {
           conversationId,
           role: "assistant",
           content: "",
-          model: selectedModel.id,
+          model: modelToUse.id,
           provider: selectedProvider.id,
           metadata: {
             isLoading: true,
@@ -127,7 +141,7 @@ export default function AiInput() {
           timestamp: new Date(),
           role: "user",
           content: text,
-          model: selectedModel.id,
+          model: modelToUse.id,
           provider: selectedProvider.id,
           metadata: userMessageContent,
         });
@@ -138,7 +152,7 @@ export default function AiInput() {
           conversationId,
           role: "assistant",
           content: "",
-          model: selectedModel.id,
+          model: modelToUse.id,
           provider: selectedProvider.id,
           metadata: {
             isLoading: true,
@@ -175,10 +189,17 @@ export default function AiInput() {
           })),
         );
 
-        const messages = buildConversationHistory(
+        let messages = buildConversationHistory(
           currentMessage,
           previousMessages,
         );
+
+        if (settings.systemPromptEnabled && settings.systemPrompt.trim()) {
+          messages = [
+            { role: "system", content: settings.systemPrompt },
+            ...messages
+          ];
+        }
 
         let baseURL = "";
         const apiKey = selectedProvider.apiKey;
@@ -225,17 +246,27 @@ export default function AiInput() {
         let aires = "";
         let response: Response;
         try {
+          const requestBody: {
+            model: string;
+            messages: ChatMessage[];
+            stream: boolean;
+            provider?: { zdr: boolean };
+          } = {
+            model: modelToUse.id,
+            messages,
+            stream: true,
+          };
+
+          if (settings.zdrEnabled) {
+            requestBody.provider = {
+              zdr: true
+            };
+          }
+
           response = await fetch(`${baseURL}/chat/completions`, {
             method: "POST",
             headers,
-            body: JSON.stringify({
-              model: selectedModel.id,
-              messages,
-              stream: true,
-              provider: {
-                zdr: true
-              }
-            }),
+            body: JSON.stringify(requestBody),
           });
         } catch {
           throw new Error(
@@ -421,17 +452,25 @@ export default function AiInput() {
             {selectedProvider && (
               <PromptInputModelSelect
                 onValueChange={handleModelChange}
-                value={selectedModel?.id ?? ""}
+                value={settings.zdrEnabled ? zdrModel.id : (selectedModel?.id ?? "")}
               >
                 <PromptInputModelSelectTrigger>
-                  <PromptInputModelSelectValue placeholder="Select model" />
+                  <PromptInputModelSelectValue 
+                    placeholder="Select model" 
+                  />
                 </PromptInputModelSelectTrigger>
                 <PromptInputModelSelectContent>
-                  {availableModels.map((model) => (
-                    <PromptInputModelSelectItem key={model.id} value={model.id}>
-                      {model.displayName}
+                  {settings.zdrEnabled ? (
+                    <PromptInputModelSelectItem key={zdrModel.id} value={zdrModel.id}>
+                      {zdrModel.displayName}
                     </PromptInputModelSelectItem>
-                  ))}
+                  ) : (
+                    availableModels.map((model) => (
+                      <PromptInputModelSelectItem key={model.id} value={model.id}>
+                        {model.displayName}
+                      </PromptInputModelSelectItem>
+                    ))
+                  )}
                 </PromptInputModelSelectContent>
               </PromptInputModelSelect>
             )}

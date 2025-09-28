@@ -17,6 +17,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -36,12 +44,14 @@ import {
   MessageCirclePlus,
   MoreHorizontal,
   Trash,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { ProviderSelector } from "./provider-selector";
+import { Switch } from "../ui/switch";
+import { Settings } from "lucide-react";
 
 export function AppSidebar() {
   const {
@@ -54,18 +64,46 @@ export function AppSidebar() {
     currentConversationId,
     loadConversations,
     clearAllData,
+    settings,
+    updateSettings,
   } = useAppStore();
 
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteAllDialogOpen, setIsDeleteAllDialogOpen] = useState(false);
+  const [isCustomizeDialogOpen, setIsCustomizeDialogOpen] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<
     string | null
   >(null);
   const [newName, setNewName] = useState("");
+  const [systemPromptType, setSystemPromptType] = useState<string>("default");
+  const [customPrompt, setCustomPrompt] = useState("");
 
   useEffect(() => {
     void loadConversations();
   }, [loadConversations]);
+
+  // Initialize prompt states when dialog opens
+  useEffect(() => {
+    if (isCustomizeDialogOpen) {
+      setCustomPrompt(settings.systemPrompt);
+      // Determine current prompt type
+      if (settings.systemPrompt === "You are a helpful AI assistant.") {
+        setSystemPromptType("default");
+      } else if (settings.systemPrompt === "Please provide concise and direct answers.") {
+        setSystemPromptType("concise");
+      } else if (settings.systemPrompt === "You are a friendly conversational AI. Engage naturally and ask follow-up questions when appropriate.") {
+        setSystemPromptType("conversational");
+      } else {
+        setSystemPromptType("custom");
+      }
+    }
+  }, [isCustomizeDialogOpen, settings.systemPrompt]);
+
+  const predefinedPrompts = {
+    default: "You are a helpful AI assistant.",
+    concise: "Please provide concise and direct answers.",
+    conversational: "You are a friendly conversational AI. Engage naturally and ask follow-up questions when appropriate.",
+  };
 
   const handleNewChat = async () => {
     const totalChats = conversations.length;
@@ -124,6 +162,22 @@ export function AppSidebar() {
     setNewName("");
   };
 
+  const handlePromptTypeChange = (value: string) => {
+    setSystemPromptType(value);
+    if (value !== "custom") {
+      setCustomPrompt(predefinedPrompts[value as keyof typeof predefinedPrompts]);
+    }
+  };
+
+  const handleSaveCustomize = () => {
+    const promptToSave = systemPromptType === "custom" 
+      ? customPrompt 
+      : predefinedPrompts[systemPromptType as keyof typeof predefinedPrompts];
+    
+    updateSettings({ systemPrompt: promptToSave });
+    setIsCustomizeDialogOpen(false);
+  };
+
   return (
     <>
       <Sidebar collapsible="icon">
@@ -155,7 +209,8 @@ export function AppSidebar() {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleNewChat}>
-                  <MessageCirclePlus /> <span className="font-semibold">New Chat</span>
+                  <MessageCirclePlus />{" "}
+                  <span className="font-semibold">New Chat</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -194,11 +249,11 @@ export function AppSidebar() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <div
-                                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md p-0 opacity-100 md:opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover:opacity-100 cursor-pointer"
+                                className="hover:bg-accent hover:text-accent-foreground inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md p-0 opacity-100 transition-opacity group-hover:opacity-100 md:opacity-0"
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
+                                  if (e.key === "Enter" || e.key === " ") {
                                     e.preventDefault();
                                     e.stopPropagation();
                                   }
@@ -222,7 +277,7 @@ export function AppSidebar() {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleDeleteClick(conv.id)}
-                                className="text-red-400 hover:text-red-300 font-semibold"
+                                className="font-semibold text-red-400 hover:text-red-300"
                               >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
@@ -239,7 +294,25 @@ export function AppSidebar() {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter />
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
+              <div className="flex items-center gap-2 px-2 py-2">
+                <Switch 
+                  checked={settings.zdrEnabled} 
+                  onCheckedChange={(checked) => updateSettings({ zdrEnabled: checked })}
+                />
+                <span className="text-sm font-medium">Zero Data Retention</span>
+              </div>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={() => setIsCustomizeDialogOpen(true)}>
+                <Settings />
+                <span className="font-medium">Customize AI</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
       </Sidebar>
 
       {/* Rename Dialog */}
@@ -299,6 +372,76 @@ export function AppSidebar() {
             </Button>
             <Button variant="destructive" onClick={handleDeleteAllChats}>
               Delete All
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Customize AI Dialog */}
+      <Dialog
+        open={isCustomizeDialogOpen}
+        onOpenChange={setIsCustomizeDialogOpen}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Customize AI</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Enable System Prompt</span>
+              <Switch 
+                checked={settings.systemPromptEnabled} 
+                onCheckedChange={(checked) => updateSettings({ systemPromptEnabled: checked })}
+              />
+            </div>
+            
+            {settings.systemPromptEnabled && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">System Prompt Type</span>
+                  <Select value={systemPromptType} onValueChange={handlePromptTypeChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select prompt type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default</SelectItem>
+                      <SelectItem value="concise">Concise</SelectItem>
+                      <SelectItem value="conversational">Conversational</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {systemPromptType === "custom" ? (
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium">Custom System Prompt</span>
+                    <Textarea 
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      placeholder="Enter your custom system prompt..."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium">Preview</span>
+                    <div className="p-3 bg-muted rounded-md text-sm">
+                      {predefinedPrompts[systemPromptType as keyof typeof predefinedPrompts]}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsCustomizeDialogOpen(false)}
+            >
+              Close
+            </Button>
+            <Button onClick={handleSaveCustomize}>
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>

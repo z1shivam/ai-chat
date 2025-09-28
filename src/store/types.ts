@@ -21,9 +21,12 @@ export interface AppSettings {
   showTimestamps: boolean;
   maxConversationHistory: number;
   defaultSystemPrompt: string;
+  systemPrompt: string;
   enableStreaming: boolean;
   temperature: number;
   maxTokens: number;
+  zdrEnabled: boolean;
+  systemPromptEnabled: boolean;
 }
 
 // Main app state interface

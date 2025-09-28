@@ -9,9 +9,12 @@ export const defaultSettings: AppSettings = {
   showTimestamps: true,
   maxConversationHistory: 100,
   defaultSystemPrompt: "You are a helpful AI assistant.",
+  systemPrompt: "You are a helpful AI assistant.",
   enableStreaming: true,
   temperature: 0.7,
   maxTokens: 4000,
+  zdrEnabled: false,
+  systemPromptEnabled: true,
 };
 
 // Default provider configuration
@@ -32,5 +35,16 @@ export const defaultModel: Model = {
   inputCost: 0,
   outputCost: 0,
   contextLength: 128000,
+  isFree: true,
+};
+
+// ZDR model configuration
+export const zdrModel: Model = {
+  id: "z-ai/glm-4.5-air:free",
+  name: "Z.AI | z-ai/glm-4.5-air:free",
+  displayName: "Z.AI: GLM 4.5 Air",
+  inputCost: 0,
+  outputCost: 0,
+  contextLength: 131072,
   isFree: true,
 };

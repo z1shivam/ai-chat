@@ -15,7 +15,7 @@ import {
 } from "@/lib/database";
 
 import type { AppState, Conversation, AppSettings } from "./types";
-import { defaultSettings, defaultProvider, defaultModel } from "./defaults";
+import { defaultSettings, defaultProvider, defaultModel, zdrModel } from "./defaults";
 import { generateId, generateConversationName } from "./utils";
 
 export type { Conversation, AppSettings } from "./types";
@@ -275,9 +275,29 @@ export const useAppStore = create<AppState>()(
       },
 
       updateSettings: (newSettings: Partial<AppSettings>) => {
-        set((state) => ({
-          settings: { ...state.settings, ...newSettings },
-        }));
+        set((state) => {
+          const updatedSettings = { ...state.settings, ...newSettings };
+          
+          // Check if ZDR enabled setting changed
+          const zdrToggled = 'zdrEnabled' in newSettings && newSettings.zdrEnabled !== state.settings.zdrEnabled;
+          
+          const newState: Partial<AppState> = {
+            settings: updatedSettings,
+          };
+          
+          // Auto-switch model when ZDR is toggled
+          if (zdrToggled) {
+            if (updatedSettings.zdrEnabled) {
+              // Switch to ZDR model
+              newState.selectedModel = zdrModel;
+            } else {
+              // Switch back to default model or keep current if it's not ZDR
+              newState.selectedModel = state.selectedModel?.id === zdrModel.id ? defaultModel : state.selectedModel;
+            }
+          }
+          
+          return newState;
+        });
       },
 
       resetSettings: () => {
