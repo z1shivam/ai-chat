@@ -1,5 +1,5 @@
 z1 AI Chat App
-
+---
 Hey! Recently released v1 of my latest frontend project. AI Chat App. Looks like ChatGPT clone at first, but it is much more than that. It is a ZDR compliant AI chat application which is highly performant (thanks to IndexedDB), and your data only resides on your local machine.
 
 try it out here, it's Free and Unlimited (for now, at least)
