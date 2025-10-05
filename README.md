@@ -1,29 +1,24 @@
-# Create T3 App
+z1 AI Chat App
+---
+Hey! Recently released v1 of my latest frontend project. AI Chat App. Looks like ChatGPT clone at first, but it is much more than that. It is a ZDR compliant AI chat application which is highly performant (thanks to IndexedDB), and your data only resides on your local machine.
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+try it out here, it's Free and Unlimited (for now, at least)
+https://ai.z1shivam.in/
 
-## What's next? How do I make an app with this?
+v1 features:
+- ZDR: No data retention on any server
+- Custom Provider and Model Support: If you still don't trust me, bring your own key!
+- 100% Static application: No server compute, you're directly talking with LLM.
+- Token Streaming: Don't make you wait, tokens arrive as they are generated.
+- Image input: Yes, and again no image is stored anywhere on cloud. It is directly encoded to base64 and send as a stream to LLM directly.
+- Multiple conversation & Renaming chat: Obviously!
+- Dark Mode support: C'mon it's 2025!
+- PWA: Can be installed as a standalone app on your phone. TADA!
+- System Prompt: Customize your AI to your preference.
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+*API key instruction: you can use any OpenAI SDK complaint LLM for this.
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
-
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
-
-## Learn More
-
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
-
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
-
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+Upcoming features:
+- Export Chat: Save your conversation as json or txt.
+- Image generation: Yeah, exactly what it sounds like.
+- Web Search: Talk with the internet!
