@@ -22,9 +22,13 @@ export const defaultProvider: ProviderConfig = {
   id: "default",
   name: "Default",
   type: "openrouter",
-  apiKey: "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",
+  apiKey:
+    "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",
   baseURL: "https://openrouter.ai/api/v1",
-  selectedModels: ["x-ai/grok-4-fast:free"],
+  selectedModels: [
+    "x-ai/grok-4-fast:free",
+    "meta-llama/llama-3.3-70b-instruct:free",
+  ],
 };
 
 // Default model configuration
@@ -37,6 +41,17 @@ export const defaultModel: Model = {
   contextLength: 128000,
   isFree: true,
 };
+
+export const defaultModel2: Model = {
+  id: "meta-llama/llama-3.3-70b-instruct:free",
+  name: "meta-llama",
+  displayName: "Meta: Llama 3.3 70B",
+  inputCost: 0,
+  outputCost: 0,
+  contextLength: 128000,
+  isFree: true,
+};
+
 
 // ZDR model configuration
 export const zdrModel: Model = {

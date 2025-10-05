@@ -440,14 +440,14 @@ export default function AiInput() {
               onChange={handleFileSelect}
               className="hidden"
             />
-            <PromptInputButton
+            {selectedModel?.id !== "meta-llama/llama-3.3-70b-instruct:free" &&  <PromptInputButton
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={!selectedProvider || isProcessing}
               title="Add images"
             >
               <ImageIcon size={16} />
-            </PromptInputButton>
+            </PromptInputButton>}
 
             {selectedProvider && (
               <PromptInputModelSelect

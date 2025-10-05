@@ -15,7 +15,7 @@ import {
 } from "@/lib/database";
 
 import type { AppState, Conversation, AppSettings } from "./types";
-import { defaultSettings, defaultProvider, defaultModel, zdrModel } from "./defaults";
+import { defaultSettings, defaultProvider, defaultModel, zdrModel, defaultModel2 } from "./defaults";
 import { generateId, generateConversationName } from "./utils";
 
 export type { Conversation, AppSettings } from "./types";
@@ -30,8 +30,8 @@ export const useAppStore = create<AppState>()(
       messagesLoading: false,
       providers: [defaultProvider],
       selectedProvider: defaultProvider,
-      selectedModel: defaultModel,
-      availableModels: [defaultModel],
+      selectedModel: defaultModel2,
+      availableModels: [defaultModel, defaultModel2],
       settings: defaultSettings,
       sidebarOpen: true,
       providerModelOpen: false,
